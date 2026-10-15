@@ -1,10 +1,8 @@
-name: Test
+name: Backend checks
 
-# No push trigger: release.yml calls this as its gate, so a push would otherwise
-# run the suite twice.
+# Reused by CI and release builds to avoid duplicate backend test runs.
 on:
   workflow_dispatch:
-  pull_request:
   workflow_call:
 
 permissions:
@@ -14,6 +12,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7

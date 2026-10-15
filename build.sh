@@ -4,12 +4,12 @@ set -e
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$ROOT"
 
-if [ ! -d frontend ]; then
-    echo "frontend/ is missing. Run: git submodule update --init --recursive" >&2
+if [ ! -f frontend/package.json ]; then
+    echo "frontend/package.json is missing. Use a complete checkout of this repository." >&2
     exit 1
 fi
 
-(cd frontend && npm i && npm run build)
+(cd frontend && npm ci && npm run build)
 
 echo "Backend"
 

@@ -1,0 +1,5 @@
+# GitHub documents this hosted runner label; actionlint 1.7.12 predates it.
+# https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04

@@ -1,89 +1,140 @@
-name: Docker Image CI
+name: Build and publish Docker image
+
 on:
   push:
     tags:
-      - "*"
+      - "v*"
   workflow_dispatch:
 
-# The workflow pushes images; nothing here writes to the repository.
-permissions:
-  contents: read
-  packages: write
+permissions: {}
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
+
   frontend-build:
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+      metadata: ${{ steps.meta.outputs.json }}
+      labels: ${{ steps.meta.outputs.labels }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+      - name: Select this repository's image
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          set -euo pipefail
+          echo "name=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          stable=false
+          if [[ "$EVENT_NAME" == push && "$REF_TYPE" == tag ]]; then
+            if [[ ! "$REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]; then
+              echo "::error::Use a version tag such as v1.0.0 or v1.0.0-rc.1."
+              exit 1
+            fi
+            if [[ "$REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+              stable=true
+            fi
+          fi
+          echo "stable=$stable" >> "$GITHUB_OUTPUT"
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_SHORT_SHA_LENGTH: 12
         with:
-          submodules: recursive
+          images: ${{ steps.image.outputs.name }}
+          flavor: latest=false
+          # Tag pushes publish version aliases. Manual runs publish manual-<ref>
+          # and sha-<commit> only, including when a version tag is selected.
+          tags: |
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'push' }}
+            type=ref,event=tag,enable=${{ github.event_name == 'push' }}
+            type=raw,value=latest,enable=${{ steps.image.outputs.stable == 'true' }}
+            type=raw,value=manual-${{ github.ref_name }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.title=M1ss-UI
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: 26
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Install dependencies and build frontend
+      - name: Install, test and build frontend
+        working-directory: frontend
         run: |
-          cd frontend
           npm ci
+          npm test
           npm run build
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: frontend-dist
+          name: frontend-dist-docker
           path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 1
 
   build:
-    needs: frontend-build
+    needs: [frontend-build, test]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { platform: linux/amd64 }
-          - { platform: linux/386 }
-          - { platform: linux/arm64/v8 }
-          - { platform: linux/arm/v7 }
-          - { platform: linux/arm/v6 }
-    runs-on: ubuntu-26.04
+        platform:
+          - linux/amd64
+          - linux/386
+          - linux/arm64/v8
+          - linux/arm/v7
+          - linux/arm/v6
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+      - name: Set application version from release tag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$EVENT_NAME" == push ]]; then
+            printf '%s\n' "${REF_NAME#v}" > config/version
+          fi
       - name: Download frontend build artifact
         uses: actions/download-artifact@v8
         with:
-          name: frontend-dist
+          name: frontend-dist-docker
           path: frontend_dist
-      - name: Prepare
-        run: |
-          platform="${{ matrix.platform }}"
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: |
-            alireza7/s-ui
-            ghcr.io/alireza0/s-ui
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=pep440,pattern={{version}}
+      - name: Prepare platform cache and artifact name
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Login to GHCR
+      - name: Log in to this repository's GHCR registry
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push by digest
         id: build
@@ -92,18 +143,19 @@ jobs:
           context: .
           file: Dockerfile.frontend-artifact
           platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          tags: |
-            alireza7/s-ui
-            ghcr.io/alireza0/s-ui
-          cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
-          cache-to: ${{ github.ref == 'refs/heads/main' && format('type=gha,scope={0},mode=max', env.PLATFORM_PAIR) || '' }}
+          labels: ${{ needs.frontend-build.outputs.labels }}
+          tags: ${{ needs.frontend-build.outputs.image }}
+          cache-from: type=gha,scope=m1ss-ui-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,scope=m1ss-ui-${{ env.PLATFORM_PAIR }},mode=max
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
       - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          mkdir -p ${{ runner.temp }}/digests
-          digest="${{ steps.build.outputs.digest }}"
-          echo "${digest#sha256:}" > "${{ runner.temp }}/digests/${digest#sha256:}"
+          set -euo pipefail
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
       - name: Upload digest
         uses: actions/upload-artifact@v7
         with:
@@ -113,8 +165,11 @@ jobs:
           retention-days: 1
 
   merge:
-    needs: build
+    needs: [frontend-build, build]
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      packages: write
     steps:
       - name: Download digests
         uses: actions/download-artifact@v8
@@ -122,38 +177,32 @@ jobs:
           path: ${{ runner.temp }}/digests
           pattern: digests-*
           merge-multiple: true
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Login to GHCR
+      - name: Log in to this repository's GHCR registry
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: |
-            alireza7/s-ui
-            ghcr.io/alireza0/s-ui
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=pep440,pattern={{version}}
-      - name: Create manifest list and push
+      - name: Publish and inspect multi-platform image
         env:
-          DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
+          IMAGE: ${{ needs.frontend-build.outputs.image }}
+          DOCKER_METADATA_OUTPUT_JSON: ${{ needs.frontend-build.outputs.metadata }}
         working-directory: ${{ runner.temp }}/digests
         run: |
-          set -e
-          for img in alireza7/s-ui ghcr.io/alireza0/s-ui; do
-            TAGS_ARGS=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -cr --arg img "$img" '.tags | map(select(startswith($img))) | map("-t " + .) | join(" ")')
-            DIGEST_REFS=$(for f in *; do echo -n "${img}@sha256:$(cat "$f") "; done)
-            docker buildx imagetools create $TAGS_ARGS $DIGEST_REFS
+          set -euo pipefail
+          mapfile -t tags < <(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          [[ ${#tags[@]} -gt 0 ]]
+          tag_args=()
+          for tag in "${tags[@]}"; do
+            tag_args+=(--tag "$tag")
           done
+          digest_refs=()
+          for digest in *; do
+            [[ "$digest" =~ ^[a-f0-9]{64}$ ]]
+            digest_refs+=("$IMAGE@sha256:$digest")
+          done
+          [[ ${#digest_refs[@]} -eq 5 ]]
+          docker buildx imagetools create "${tag_args[@]}" "${digest_refs[@]}"
+          docker buildx imagetools inspect "${tags[0]}"

@@ -34,3 +34,6 @@ cert/
 *.key
 *.crt
 .env
+
+# Local screenshots are review artifacts, not application inputs.
+preview/

@@ -1,4 +1,4 @@
-# Contributing to S-UI
+# Contributing to M1ss-UI
 
 Thank you for your interest in contributing to S-UI. This document explains how to set up a development environment, follow project conventions, and submit changes. Your contributions help make the **multi-inbound-per-user** approach and the rest of the project better for everyone.
 
@@ -26,19 +26,18 @@ Please be respectful and constructive when interacting with maintainers and othe
 ### Prerequisites
 
 - **Go**: 1.25 or later (see `go.mod` for the exact version).
-- **Git**: For cloning and submodules.
+- **Git**: For cloning. The customized frontend is tracked directly in this repository.
 - **C compiler**: Required for CGO (e.g. `gcc`, `musl-dev` on Alpine).
 - **Node.js** (optional): Only if you plan to work on or rebuild the frontend. The repo can be run with pre-built frontend assets.
 
-### Clone and Submodules
+### Clone the repository
 
 ```bash
-git clone https://github.com/alireza0/s-ui
-cd s-ui
-git submodule update --init --recursive
+git clone https://github.com/HITM1ss/m1ss-ui
+cd m1ss-ui
 ```
 
-The **frontend** lives in a submodule. If you only work on the backend, you can use the existing `web/html` contents or build the frontend once (see below).
+The **frontend** is included directly in this repository; a submodule checkout is not needed. If you only work on the backend, you can use the existing `web/html` contents or build the frontend once (see below).
 
 ### Backend-Only Development (quickest)
 
@@ -61,11 +60,11 @@ The **frontend** lives in a submodule. If you only work on the backend, you can 
 
 ### Full Stack (Backend + Frontend)
 
-1. **Frontend** (separate repo in submodule):
+1. **Frontend** (`frontend/`):
 
    ```bash
    cd frontend
-   npm install
+   npm ci
    npm run build
    cd ..
    ```
@@ -116,9 +115,8 @@ documents the per-platform deltas (Windows and Docker swap `with_musl` for `with
 ### Docker (optional)
 
 ```bash
-git clone https://github.com/alireza0/s-ui
-cd s-ui
-git submodule update --init --recursive
+git clone https://github.com/HITM1ss/m1ss-ui
+cd m1ss-ui
 docker build -t s-ui .
 # or: docker compose up -d
 ```

@@ -1,17 +1,17 @@
-name: Release S-UI
+name: Build and release M1ss-UI
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
   push:
-    branches:
-      - main
     tags:
-      - "*"
+      - "v*"
 
 permissions:
   contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   NODE_VERSION: "26"
@@ -20,22 +20,33 @@ env:
   LIBCRONET_BASE_URL: "https://github.com/SagerNet/cronet-go/releases/latest/download"
 
 jobs:
+  validate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Validate pushed version tag
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]; then
+            echo "::error::Use a version tag such as v1.0.0 or v1.0.0-rc.1."
+            exit 1
+          fi
+
   test:
-    # Skipped on a tag and on a published release: both ship a commit that
-    # already went through this gate on main.
-    if: ${{ github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/') }}
+    needs: validate
     uses: ./.github/workflows/test.yml
 
   build-frontend:
-    needs: test
-    # A skipped gate is not a failed one, so the build still runs on a tag.
-    if: ${{ always() && needs.test.result != 'failure' && needs.test.result != 'cancelled' }}
+    needs: validate
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository (frontend only)
+      - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          submodules: recursive
           fetch-depth: 1
 
       - name: Setup Node.js
@@ -45,25 +56,25 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Build frontend
+      - name: Test and build frontend
+        working-directory: frontend
         run: |
-          cd frontend
           npm ci
+          npm test
           npm run build
-          cd ..
 
       - name: Upload frontend dist
         uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 7
 
   build-linux:
     name: build-${{ matrix.platform }}
-    needs: build-frontend
-    # The `always()` on build-frontend only rescues that job: a skipped `test`
-    # keeps propagating down the graph unless every dependent repeats it.
-    if: ${{ always() && needs.build-frontend.result == 'success' }}
+    needs: [test, build-frontend]
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -79,6 +90,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Set release version
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: printf '%s\n' "${RELEASE_TAG#v}" > config/version
 
       - name: Download frontend dist
         uses: actions/download-artifact@v8
@@ -105,11 +122,13 @@ jobs:
 
       - name: Resolve cronet-go commit
         if: matrix.naive
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           SHORT=$(go list -m -f '{{.Version}}' github.com/sagernet/cronet-go | sed 's/.*-//')
-          FULL=$(curl -fsSL "https://api.github.com/repos/SagerNet/cronet-go/commits/${SHORT}" | jq -r '.sha')
-          [ -n "$FULL" ] && [ "$FULL" != "null" ] || { echo "could not resolve cronet-go commit ${SHORT}" >&2; exit 1; }
+          FULL=$(gh api "repos/SagerNet/cronet-go/commits/$SHORT" --jq '.sha')
+          [[ "$FULL" =~ ^[0-9a-f]{40}$ ]] || { echo "could not resolve cronet-go commit ${SHORT}" >&2; exit 1; }
           echo "cronet-go: $FULL"
           echo "CRONET_COMMIT=$FULL" >> "$GITHUB_ENV"
 
@@ -119,8 +138,8 @@ jobs:
         run: |
           set -e
           git init ~/cronet-go
-          git -C ~/cronet-go remote add origin ${{ env.CRONET_GO_REPO }}
-          git -C ~/cronet-go fetch --depth=1 origin "${{ env.CRONET_COMMIT }}"
+          git -C ~/cronet-go remote add origin "$CRONET_GO_REPO"
+          git -C ~/cronet-go fetch --depth=1 origin "$CRONET_COMMIT"
           git -C ~/cronet-go checkout FETCH_HEAD
           git -C ~/cronet-go submodule update --init --recursive --depth=1
 
@@ -147,13 +166,13 @@ jobs:
       - name: Build cronet lib and set toolchain env (CC, CXX, CGO_LDFLAGS, PATH)
         if: matrix.naive
         run: |
-          set -e
+          set -euo pipefail
           cd ~/cronet-go
           go run ./cmd/build-naive --target=linux/${{ matrix.arch }} --libc=musl download-toolchain
           go run ./cmd/build-naive --target=linux/${{ matrix.arch }} --libc=musl env | while IFS= read -r line; do
             line="${line#export }"
             [[ -z "$line" ]] && continue
-            echo "$line" >> $GITHUB_ENV
+            echo "$line" >> "$GITHUB_ENV"
           done
 
       - name: Set Go build env (all platforms)
@@ -163,14 +182,14 @@ jobs:
           echo "GOARCH=${{ matrix.arch }}" >> $GITHUB_ENV
           if [ -n "${{ matrix.goarm }}" ]; then echo "GOARM=${{ matrix.goarm }}" >> $GITHUB_ENV; fi
 
-      # Non-naive platforms only: Bootlin musl (armv5, s390x).
-      - name: Set up Bootlin musl (armv5, s390x)
+      # These platforms retain the non-Cronet protocol set in the test profile.
+      - name: Set up Bootlin musl (armv6, armv5, s390x)
         if: ${{ matrix.naive != true }}
         run: |
           set -e
           BOOTLIN_ARCH="${{ matrix.bootlin }}"
           echo "Resolving Bootlin musl toolchain for arch=$BOOTLIN_ARCH (platform=${{ matrix.platform }})"
-          TARBALL_BASE="${{ env.BOOTLIN_BASE_URL }}/$BOOTLIN_ARCH/tarballs/"
+          TARBALL_BASE="$BOOTLIN_BASE_URL/$BOOTLIN_ARCH/tarballs/"
           TARBALL_URL=$(curl -fsSL "$TARBALL_BASE" | grep -oE "${BOOTLIN_ARCH}--musl--stable-[^\"]+\\.tar\\.xz" | sort -r | head -n1)
           [ -z "$TARBALL_URL" ] && { echo "Failed to locate Bootlin musl toolchain for arch=$BOOTLIN_ARCH" >&2; exit 1; }
           echo "Downloading: $TARBALL_URL"
@@ -238,22 +257,30 @@ jobs:
         with:
           name: s-ui-linux-${{ matrix.platform }}
           path: ./s-ui-linux-${{ matrix.platform }}.tar.gz
+          if-no-files-found: error
           retention-days: 30
 
   build-windows:
-    needs: build-frontend
-    if: ${{ always() && needs.build-frontend.result == 'success' }}
+    needs: [test, build-frontend]
     name: build-windows-${{ matrix.arch }}
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         include:
           - { arch: amd64, runner: windows-2022, cgo: "1" }
-          - { arch: arm64, runner: ubuntu-26.04, cgo: "0" }
+          - { arch: arm64, runner: ubuntu-26.04, cgo: "1" }
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Set release version
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: printf '%s\n' "${RELEASE_TAG#v}" > config/version
 
       - name: Download frontend artifact
         uses: actions/download-artifact@v8
@@ -292,9 +319,32 @@ jobs:
           # Install zip
           choco install zip -y
 
+      # SQLite requires CGO on Windows too; the upstream CGO=0 ARM64 binary
+      # compiled successfully but could not open its database at runtime.
+      - name: Install pinned LLVM-MinGW for Windows ARM64
+        if: matrix.arch == 'arm64'
+        shell: bash
+        env:
+          LLVM_MINGW_ARCHIVE: llvm-mingw-20261006-ucrt-ubuntu-22.04-x86_64.tar.xz
+          LLVM_MINGW_SHA256: 5f9c6ed95b2d4bdb2869a488c5fd5857fbdabcf288a0aa3eb1da43f6a08d8ab4
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/$LLVM_MINGW_ARCHIVE"
+          toolchain_dir="$RUNNER_TEMP/llvm-mingw"
+          curl --retry 3 -fsSL \
+            "https://github.com/mstorsjo/llvm-mingw/releases/download/20261006/$LLVM_MINGW_ARCHIVE" \
+            -o "$archive"
+          printf '%s  %s\n' "$LLVM_MINGW_SHA256" "$archive" | sha256sum --check -
+          mkdir -p "$toolchain_dir"
+          tar -xJf "$archive" -C "$toolchain_dir" --strip-components=1
+          echo "$toolchain_dir/bin" >> "$GITHUB_PATH"
+          echo "CC=$toolchain_dir/bin/aarch64-w64-mingw32-gcc" >> "$GITHUB_ENV"
+          echo "CXX=$toolchain_dir/bin/aarch64-w64-mingw32-g++" >> "$GITHUB_ENV"
+
       - name: Build s-ui
         shell: bash
         run: |
+          set -euo pipefail
           export CGO_ENABLED=${{ matrix.cgo }}
           export GOOS=windows
           export GOARCH=${{ matrix.arch }}
@@ -322,8 +372,11 @@ jobs:
 
       - name: Download libcronet-go
         shell: bash
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
         run: |
-          curl -qsL -o s-ui-windows/libcronet.dll ${{ env.LIBCRONET_BASE_URL }}/libcronet-windows-${{ matrix.arch }}.dll
+          curl --retry 3 -fSL -o s-ui-windows/libcronet.dll "$LIBCRONET_BASE_URL/libcronet-windows-$TARGET_ARCH.dll"
+          test -s s-ui-windows/libcronet.dll
 
       - name: Package
         shell: bash
@@ -335,24 +388,22 @@ jobs:
         with:
           name: s-ui-windows-${{ matrix.arch }}
           path: ./s-ui-windows-${{ matrix.arch }}.zip
+          if-no-files-found: error
           retention-days: 30
 
-  # One place that touches the release, reached only once every build has
-  # succeeded. Publishing from each matrix leg left a half-populated release
-  # behind whenever one platform failed, and the two copies of this step had
-  # drifted to different tag expressions.
+  # A manual run builds downloadable artifacts without publishing. A version
+  # tag publishes only after the test gates and every target have succeeded.
   publish:
     needs: [build-linux, build-windows]
-    if: |
-      always() &&
-      needs.build-linux.result == 'success' &&
-      needs.build-windows.result == 'success' &&
-      ((github.event_name == 'release' && github.event.action == 'published') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-26.04
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
+      - name: Checkout release scripts
+        uses: actions/checkout@v7
+
       - name: Download build artifacts
         uses: actions/download-artifact@v8
         with:
@@ -360,21 +411,52 @@ jobs:
           merge-multiple: true
           path: dist
 
-      # install.sh verifies this before extracting, so a release without it
-      # silently falls back to an unauthenticated install.
-      - name: Generate SHA256SUMS
+      - name: Prepare scripts and verify release assets
         run: |
-          set -e
+          set -euo pipefail
+          cp install.sh s-ui.sh dist/
           cd dist
-          sha256sum * > SHA256SUMS
-          cat SHA256SUMS
+          assets=(
+            s-ui-linux-amd64.tar.gz
+            s-ui-linux-arm64.tar.gz
+            s-ui-linux-armv7.tar.gz
+            s-ui-linux-armv6.tar.gz
+            s-ui-linux-armv5.tar.gz
+            s-ui-linux-386.tar.gz
+            s-ui-linux-s390x.tar.gz
+            s-ui-windows-amd64.zip
+            s-ui-windows-arm64.zip
+            install.sh
+            s-ui.sh
+          )
+          for asset in "${assets[@]}"; do
+            test -s "$asset" || { echo "Missing release asset: $asset" >&2; exit 1; }
+          done
+          sha256sum "${assets[@]}" > SHA256SUMS
+          sha256sum --check SHA256SUMS
 
-      - name: Upload to Release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
-          file: dist/*
-          file_glob: true
-          prerelease: true
-          overwrite: true
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          prerelease=false
+          release_flags=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            prerelease=true
+            release_flags+=(--prerelease)
+          fi
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --prerelease="$prerelease" --draft=false
+          else
+            gh release create "$RELEASE_TAG" dist/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --target "$RELEASE_SHA" \
+              --title "M1ss-UI $RELEASE_TAG" \
+              --generate-notes \
+              "${release_flags[@]}"
+          fi
