@@ -38,7 +38,7 @@
                 v-model="inbound.type"
                 hide-details
                 :label="$t('type')"
-                :items="Object.keys(inTypes).map((key,index) => ({title: key, value: Object.values(inTypes)[index]}))"
+                :items="[{title: 'VLESS', value: inTypes.VLESS}]"
                 @update:model-value="changeType"
               />
             </v-col>
@@ -133,10 +133,6 @@
               <TProxy
                 v-if="inbound.type == inTypes.TProxy"
                 :inbound="inbound"
-              />
-              <Transport
-                v-if="Object.hasOwn(inbound,'transport')"
-                :data="inbound"
               />
               <Users
                 v-if="hasUser"
@@ -256,7 +252,6 @@ import AnyTls from '@/components/protocols/AnyTls.vue'
 import InTls from '@/components/tls/InTLS.vue'
 import TProxy from '@/components/protocols/TProxy.vue'
 import Multiplex from '@/components/Multiplex.vue'
-import Transport from '@/components/Transport.vue'
 import AddrVue from '@/components/Addr.vue'
 import OutJsonVue from '@/components/OutJson.vue'
 import Data from '@/store/modules/data'
@@ -265,7 +260,7 @@ export default {
     DocLink,
     Listen, InTls, Hysteria2, Naive, Direct, Shadowsocks,
     Users, Hysteria, ShadowTls, TProxy, Multiplex, Tuic, Tun,
-    AnyTls, Transport, AddrVue, OutJsonVue, Dial, Snell, Cloudflared
+    AnyTls, AddrVue, OutJsonVue, Dial, Snell, Cloudflared
   },
   props: {
     visible: { type: Boolean, required: true },
@@ -276,7 +271,7 @@ export default {
   emits: ['close'],
   data() {
     return {
-      inbound: createInbound("direct",{ id:0, "tag": "" }),
+      inbound: createInbound("vless",{ id:0, "tag": "" }),
       title: "add",
       loading: false,
       side: "s",
@@ -368,7 +363,7 @@ export default {
       }
       else {
         const port = RandomUtil.randomIntRange(10000, 60000)
-        this.inbound = createInbound("direct",{ id: 0, tag: "direct-"+port ,listen: "::", listen_port: port })
+        this.inbound = createInbound("vless",{ id: 0, tag: "vless-"+port ,listen: "::", listen_port: port })
         if (this.HasInData.includes(this.inbound.type)){
           this.inbound.addrs = []
           this.inbound.out_json = {}

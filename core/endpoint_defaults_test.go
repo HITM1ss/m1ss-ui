@@ -1,3 +1,5 @@
+//go:build !m1ss_minimal
+
 package core
 
 import (

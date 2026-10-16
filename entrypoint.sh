@@ -24,7 +24,7 @@ if [ -n "$SUI_UID" ]; then
 		echo "entrypoint: SUI_UID is set but this container is not running as root; ignoring" >&2
 	else
 		mkdir -p "$DB_FOLDER"
-		chown -R "${SUI_UID}:${SUI_GID}" "$DB_FOLDER" /app/sui /app/libcronet.so 2>/dev/null || true
+		chown -R "${SUI_UID}:${SUI_GID}" "$DB_FOLDER" /app/sui 2>/dev/null || true
 		echo "entrypoint: dropping to uid ${SUI_UID}:${SUI_GID}"
 		exec su-exec "${SUI_UID}:${SUI_GID}" ./sui
 	fi

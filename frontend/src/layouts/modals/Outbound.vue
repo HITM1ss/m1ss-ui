@@ -38,7 +38,7 @@
                     v-model="outbound.type"
                     hide-details
                     :label="$t('type')"
-                    :items="Object.keys(outTypes).map((key,index) => ({title: key, value: Object.values(outTypes)[index]}))"
+                    :items="Object.entries(outTypes).filter(([, value]) => ['direct','vless','selector','urltest'].includes(value)).map(([title, value]) => ({title, value}))"
                     @update:model-value="changeType"
                   />
                 </v-col>

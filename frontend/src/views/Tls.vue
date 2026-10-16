@@ -179,6 +179,7 @@
       <v-btn
         color="primary"
         :loading="providerLoading"
+        disabled
         @click="showProviderModal(-1)"
       >
         {{ $t('actions.add') }}
@@ -307,6 +308,7 @@
           </v-overlay>
           <v-btn
             icon="mdi-content-duplicate"
+            disabled
             @click="cloneProvider(index)"
           >
             <v-icon />

@@ -3,7 +3,18 @@ setlocal enabledelayedexpansion
 
 echo Building S-UI for Windows...
 
-cd /d "%~dp0"
+set "ROOT_DIR=%~dp0.."
+cd /d "%ROOT_DIR%"
+
+REM Read the shared build tags from build-tags.sh.
+set "BUILD_TAGS="
+for /f "tokens=1,* delims==" %%A in ('findstr /b "BASE_TAGS=" "%ROOT_DIR%\build-tags.sh"') do set "BUILD_TAGS=%%B"
+set "BUILD_TAGS=!BUILD_TAGS:"=!"
+if not defined BUILD_TAGS (
+    echo Error: Could not read BASE_TAGS from build-tags.sh
+    pause
+    exit /b 1
+)
 
 REM Check if Go is installed
 go version >nul 2>&1
@@ -25,7 +36,7 @@ if errorlevel 1 (
 
 echo Building frontend...
 cd frontend
-call npm install
+call npm ci
 if errorlevel 1 (
     echo Error: Failed to install frontend dependencies
     pause
@@ -52,21 +63,13 @@ set CGO_ENABLED=1
 set GOOS=windows
 set GOARCH=amd64
 
-REM Try to build with CGO first
-go build -ldflags "-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" -o sui.exe main.go
+go build -trimpath -ldflags "-w -s" -tags "!BUILD_TAGS!" -o sui.exe main.go
 if errorlevel 1 (
-    echo Warning: CGO build failed, trying without CGO...
-    set CGO_ENABLED=0
-    go build -ldflags "-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" -o sui.exe main.go
-    if errorlevel 1 (
-        echo Error: Failed to build backend
-        pause
-        exit /b 1
-    )
-    echo Built without CGO (some features may be limited)
-) else (
-    echo Built with CGO
+    echo Error: Failed to build backend with CGO enabled
+    pause
+    exit /b 1
 )
+echo Built with CGO
 
 echo Build completed successfully!
 echo Output: sui.exe

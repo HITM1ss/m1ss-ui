@@ -293,7 +293,7 @@ export default {
     return {
       title: "add",
       dnsServer: createDnsServer("local",{tag: "dns-" + RandomUtil.randomSeq(3)}),
-      dnsTypes: Object.keys(DnsTypes).map((key,index) => ({title: key, value: Object.values(DnsTypes)[index]})),
+      dnsTypes: Object.entries(DnsTypes).filter(([, value]) => ['local','hosts','tcp','udp','tls','https','fakeip'].includes(value)).map(([title, value]) => ({title, value})),
       HasServer: [DnsTypes.TCP, DnsTypes.UDP, DnsTypes.TLS, DnsTypes.QUIC, DnsTypes.HTTPS, DnsTypes.HTTP3],
       HasHeaders: [DnsTypes.HTTPS, DnsTypes.HTTP3],
       HasTls: [DnsTypes.TLS, DnsTypes.QUIC, DnsTypes.HTTPS, DnsTypes.HTTP3],

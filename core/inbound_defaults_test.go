@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"github.com/sagernet/sing-box/option"
@@ -77,6 +78,9 @@ func TestInboundDefaults(t *testing.T) {
 	port := 43100
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			if !slices.Contains(InboundRegistry().OptionTypes(), testCase.options["type"].(string)) {
+				t.Skip("protocol excluded from this build")
+			}
 			port++
 			inbound := map[string]any{"tag": testCase.name + "-in"}
 			for key, value := range testCase.options {

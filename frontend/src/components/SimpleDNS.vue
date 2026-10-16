@@ -12,7 +12,7 @@
         v-model="data.type"
         hide-details
         :label="$t('type')"
-        :items="['udp','tcp','local','tls','quic','h3']"
+        :items="['udp','tcp','local','tls']"
         density="compact"
         :class="data.type != 'local' ? 'noGutters' : ''"
         @update:model-value="updateType($event)"

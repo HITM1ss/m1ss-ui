@@ -135,7 +135,7 @@ func TestFailedStartLeavesNoInstance(t *testing.T) {
 	t.Cleanup(func() { _ = c.Stop() })
 
 	// An unparseable listen address fails while the box is being built.
-	err := c.Start([]byte(`{"inbounds":[{"type":"mixed","tag":"in","listen":"not-an-address","listen_port":1080}]}`))
+	err := c.Start([]byte(`{"inbounds":[{"type":"vless","tag":"in","listen":"not-an-address","listen_port":1080}]}`))
 	if err == nil {
 		t.Skip("this config built successfully; the failure path needs another trigger")
 	}
