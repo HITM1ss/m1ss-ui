@@ -109,6 +109,8 @@ const menuGroups = [
     { title: 'pages.inbounds', icon: 'mdi-cloud-download-outline', path: '/inbounds' },
     { title: 'pages.clients', icon: 'mdi-account-multiple-outline', path: '/clients' },
     { title: 'pages.outbounds', icon: 'mdi-cloud-upload-outline', path: '/outbounds' },
+    { title: 'pages.endpoints', icon: 'mdi-access-point-network', path: '/endpoints' },
+    { title: 'pages.services', icon: 'mdi-server-outline', path: '/services' },
   ] },
   { title: 'network', items: [
     { title: 'pages.tls', icon: 'mdi-shield-key-outline', path: '/tls' },

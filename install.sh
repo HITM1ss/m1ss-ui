@@ -372,11 +372,6 @@ error_log="/var/log/s-ui.log"
 respawn_delay=10
 supervisor=supervise-daemon
 
-# Leave headroom for SQLite, stacks and Alpine on a 128 MB VPS.
-# /etc/conf.d/s-ui may override these soft Go runtime defaults.
-export GOMEMLIMIT="${GOMEMLIMIT:-64MiB}"
-export GOGC="${GOGC:-50}"
-
 depend() {
     need localmount
     use net dns logger firewall

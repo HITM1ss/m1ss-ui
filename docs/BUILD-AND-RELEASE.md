@@ -1,10 +1,6 @@
 # M1ss-UI 自动构建与部署
 
-本仓库发布面向 128 MB Alpine VPS 的 M1ss-UI 精简版。`build-tags.sh` 的所有构建配置统一使用 `with_utls,m1ss_minimal`：代理入站仅保留原生 TCP VLESS，继续使用原有 Reality、XTLS-Vision 和 uTLS 实现。Web UI、用户管理、订阅、流量统计和 SQLite 保留。DNS、直连、阻断和出站分组作为代理的基础能力保留。
-
-Naive/Cronet、QUIC 代理、gRPC、内置 ACME、gVisor TUN、Tailscale、Cloudflared、OpenConnect、OpenVPN 和其他代理协议不进入发布程序的注册表。完整上游协议源码保留在仓库，用于历史迁移和参考；`go.mod` 中存在依赖声明不表示该模块会链接进发布程序。Web 框架 Gin 的上游 HTTP/3 包引用与 sing-box 的 `with_quic` 代理组件是不同依赖；面板仍由现有 HTTP/HTTPS TCP 服务器提供服务。
-
-`frontend/` 直接纳入主仓库，Actions 不拉取上游前端子模块。前端的 GPL 许可证和原有源码说明仍保留。已有数据库、订阅格式、服务名称与安装路径保持兼容；旧数据库中使用已移除协议的配置需要先删除或改成 VLESS。
+本仓库在 S-UI 的构建链上发布定制前端，不修改协议构建标签。`frontend/` 已作为普通源码目录纳入主仓库，因此 Actions 不再拉取上游前端子模块。前端的 GPL 许可证和原有源码说明仍保留。
 
 ## 自动化入口
 
@@ -31,23 +27,19 @@ GitHub 上需启用 Actions。发布步骤使用该仓库自动提供的 `GITHUB
 
 安装包名称保留 `s-ui-linux-<架构>.tar.gz` / `s-ui-windows-<架构>.zip`，Linux 包内目录保留 `s-ui/`，以兼容既有安装路径、服务名称与数据目录。页面名称为 M1ss-UI。CI 从同一提交构建前端，将 `dist/` 放入 `web/html/`，再由 Go 嵌入程序；服务器运行时不需要 Node.js 或 Go。
 
-Linux 全部使用 Bootlin musl 工具链静态链接，CGO 保持启用以支持 SQLite；不下载 Chromium/Cronet，也不附带 `libcronet.so` / `libcronet.dll`。`with_musl` 是 Cronet 的构建标签，移除它不会移除 Alpine 的 musl 兼容性。Windows ARM64 仍启用 CGO 并使用固定摘要校验的 LLVM-MinGW。Docker 同样删除 Cronet 运行库。
-
-发布前必须通过 Alpine 3.21 的实际运行检查：限制整个容器为 128,000,000 字节、禁用 swap，以正式 amd64 安装包启动；验证登录、SQLite、VLESS/Reality/Vision 配置保存、三种订阅格式、持续轮询，以及重启后数据库保留。日志记录 cgroup 内存峰值和 OOM 计数。核心测试另外验证 Chrome/Firefox uTLS 指纹下的真实 Reality + Vision TLS 数据传输。其他架构没有 128 MB 运行测量。
-
-OpenRC、systemd 和 Docker 默认设置 `GOMEMLIMIT=64MiB`、`GOGC=50`，为 SQLite、线程栈和系统保留余量。这是 Go 运行时软目标，不是整个进程 RSS 的硬限制；并发连接、大型规则集和大量历史数据仍会增加内存。Alpine 可在 `/etc/conf.d/s-ui` 覆盖这些变量；systemd 使用服务 override，Docker 使用环境变量覆盖。服务器应安装预构建包，无需在 128 MB 机器上编译。
+Linux 构建保留官方 CGO、musl/Cronet 工具链及 `build-tags.sh` 配置。官方不启用 Naive 的目标仍使用原有非 Naive 配置；不能用随意省略标签的 `go build` 代替。Windows ARM64 启用 CGO 并使用固定摘要校验的 LLVM-MinGW，避免关闭 CGO 后 SQLite 无法打开数据库。Docker ARMv6 的运行兼容性仍需目标服务器验证。
 
 ## 发布一个版本
 
-先提交并推送当前代码（包括 `frontend/` 和 `.github/`），然后推送尚未使用的版本标签，例如 `v1.6.5`，不覆盖旧标签：
+先提交并推送当前代码（包括 `frontend/` 和 `.github/`），然后推送版本标签。例如当前代码基于 1.6.4，可选择尚未使用的 `v1.6.4`；如果已存在则使用新的版本号，不覆盖旧标签：
 
 ```sh
 git push origin main
-git tag v1.6.5
-git push origin v1.6.5
+git tag v1.6.4
+git push origin v1.6.4
 ```
 
-在 Actions 页面等待 Release 与 Docker 两个工作流结束。全部安装包及 Alpine 低内存检查成功后才发布 Release；镜像的多架构清单也只在所有镜像架构成功后更新。两个工作流独立运行，失败后在对应工作流查看日志并重新运行。标签构建会把去掉 `v` 的版本写入构建工作区的 `config/version`；手动构建保留源码版本。本次精简沿用仓库现有 sing-box 1.14.3，发布号不表示合并了上游同号版本。
+在 Actions 页面等待 Release 与 Docker 两个工作流结束。全部安装包成功后才发布 Release；镜像的多架构清单也只在所有镜像架构成功后更新。两个工作流独立运行，失败后在对应工作流查看日志并重新运行。标签构建会把去掉 `v` 的版本写入构建工作区的 `config/version`，安装包与镜像因此显示相同版本；手动构建保留源码版本。这不会替你合并上游更新，发布标签仍应对应实际代码。
 
 如果只想试编译，打开 Actions → Build and release M1ss-UI → Run workflow。成功后从该次运行的 Artifacts 下载对应安装包；不必先创建 Release。
 

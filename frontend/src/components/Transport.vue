@@ -23,7 +23,7 @@
           v-model="transportType"
           hide-details
           :label="$t('type')"
-          :items="Object.entries(trspTypes).filter(([, value]) => !['quic','grpc'].includes(value)).map(([title, value]) => ({title, value}))"
+          :items="Object.keys(trspTypes).map((key,index) => ({title: key, value: Object.values(trspTypes)[index]}))"
         />
       </v-col>
     </v-row>

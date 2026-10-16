@@ -6,7 +6,11 @@ import (
 
 	"github.com/alireza0/s-ui/util/common"
 
+	sb "github.com/sagernet/sing-box"
+	_ "github.com/sagernet/sing-box/experimental/clashapi"
+	_ "github.com/sagernet/sing-box/experimental/v2rayapi"
 	"github.com/sagernet/sing-box/option"
+	_ "github.com/sagernet/sing-box/transport/v2rayquic"
 )
 
 // Core owns the running sing-box instance. Everything mutable lives behind mu,
@@ -28,7 +32,7 @@ type Core struct {
 }
 
 func NewCore() *Core {
-	ctx := Context(context.Background(), InboundRegistry(), OutboundRegistry(),
+	ctx := sb.Context(context.Background(), InboundRegistry(), OutboundRegistry(),
 		EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())
 	return &Core{ctx: ctx}
 }

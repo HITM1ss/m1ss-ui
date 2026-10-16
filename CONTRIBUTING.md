@@ -99,9 +99,9 @@ go build -tags "$TAGS" -ldflags "$(ldflags_for dev)" ...
 Profiles: `test`, `dev`, `release`, `windows`, `docker`. Assign before use, so an unknown
 name aborts under `set -e` instead of expanding to an empty string.
 
-All profiles use `with_utls,m1ss_minimal`, including tests. The minimal registry keeps
-native TCP VLESS with Reality/Vision, DNS and routing support. CGO remains required
-for SQLite, including on Alpine; no Cronet library or optional protocol tag is needed.
+Use these when building or testing locally, otherwise you get the stub implementations for
+OpenVPN, OpenConnect, Tailscale, Cloudflared and naive instead of the real ones. The file
+documents the per-platform deltas (Windows and Docker swap `with_musl` for `with_purego`).
 
 ### Environment Variables (development)
 
@@ -187,10 +187,9 @@ go test -tags "$TAGS" ./...
 go test -race -short -tags "$TAGS" ./api/... ./service/... ./sub/... ./database/... ./util/... ./logger/... ./network/...
 ```
 
-Every profile has the same feature set. Full upstream protocol fixtures are retained
-behind `!m1ss_minimal`; shipping tests include real Reality/Vision round trips with
-Chrome and Firefox fingerprints. `sh scripts/check-minimal-deps.sh` guards the
-executable's dependency graph. Release additionally gates on a 128 MB Alpine smoke test.
+Use `test`, not `dev`: `dev` adds the cronet tags, which need a toolchain only the release
+workflow sets up. `test` is what the release builds for armv6, armv5 and s390x, so nothing
+goes uncovered.
 
 A check in `.github/workflows/test.yml` fails the build if a tag list is pasted inline
 anywhere outside `build-tags.sh`.

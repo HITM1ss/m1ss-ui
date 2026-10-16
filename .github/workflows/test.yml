@@ -33,12 +33,7 @@ jobs:
           fi
 
       - name: Vet
-        run: |
-          . ./build-tags.sh
-          go vet -tags "$(tags_for test)" ./...
-
-      - name: Check minimal executable dependencies
-        run: sh scripts/check-minimal-deps.sh
+        run: go vet ./...
 
       # A list pasted back into a workflow or Dockerfile compiles fine and then
       # drifts in silence. with_qui[c] so the pattern misses its own line.
@@ -56,7 +51,8 @@ jobs:
             exit 1
           fi
 
-      # Tests use exactly the same feature set as shipping binaries.
+      # "test", not "dev": same protocols, minus the cronet tags no stock
+      # toolchain can link. It is what release.yml builds for armv6/armv5/s390x.
       - name: Test
         run: |
           set -e

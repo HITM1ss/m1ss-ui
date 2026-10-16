@@ -6,33 +6,16 @@ param(
 )
 
 if ($Help) {
-    Write-Host "Usage: .\build-windows.ps1 [-Architecture <arch>] [-Help]"
+    Write-Host "Usage: .\build-windows.ps1 [-Architecture <arch>] [-NoCGO] [-Help]"
     Write-Host "Architectures: amd64, 386, arm64"
     Write-Host "Examples:"
     Write-Host "  .\build-windows.ps1                    # Build for amd64 with CGO"
     Write-Host "  .\build-windows.ps1 -Architecture 386 # Build for 32-bit Windows"
+    Write-Host "  .\build-windows.ps1 -NoCGO            # Build without CGO"
     exit 0
 }
 
-if ($NoCGO) {
-    Write-Host "Error: -NoCGO is not supported because SQLite requires CGO." -ForegroundColor Red
-    exit 1
-}
-
 Write-Host "Building S-UI for Windows ($Architecture)..." -ForegroundColor Green
-
-# Resolve the repository root from this script's location.
-$repoRoot = Split-Path -Parent $PSScriptRoot
-Set-Location $repoRoot
-
-# Read the shared build tags from build-tags.sh.
-$tagLine = Get-Content (Join-Path $repoRoot "build-tags.sh") | Where-Object { $_ -match '^BASE_TAGS="([^"]+)"$' } | Select-Object -First 1
-if ($null -eq $tagLine -or $tagLine -notmatch '^BASE_TAGS="([^"]+)"$') {
-    Write-Host "Error: Could not read BASE_TAGS from build-tags.sh" -ForegroundColor Red
-    Read-Host "Press Enter to exit"
-    exit 1
-}
-$buildTags = $Matches[1]
 
 # Check if Go is installed
 try {
@@ -68,7 +51,7 @@ Push-Location frontend
 
 try {
     Write-Host "Installing dependencies..." -ForegroundColor Cyan
-    npm ci
+    npm install
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to install frontend dependencies"
     }
@@ -101,20 +84,40 @@ Copy-Item "frontend\dist\*" "web\html\" -Recurse -Force
 Write-Host "Building backend..." -ForegroundColor Yellow
 
 # Set environment variables
-$env:CGO_ENABLED = "1"
 $env:GOOS = "windows"
 $env:GOARCH = $Architecture
 
-Write-Host "Building with CGO..." -ForegroundColor Yellow
+if ($NoCGO) {
+    $env:CGO_ENABLED = "0"
+    Write-Host "Building without CGO..." -ForegroundColor Yellow
+} else {
+    $env:CGO_ENABLED = "1"
+    Write-Host "Building with CGO..." -ForegroundColor Yellow
+}
 
 # Build command
+$buildCmd = "go build -ldflags `"-w -s`" -tags `"with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale`" -o sui.exe main.go"
 
 try {
-    & go build -trimpath -ldflags '-w -s' -tags $buildTags -o sui.exe main.go
+    Invoke-Expression $buildCmd
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to build backend with CGO enabled"
+        if (!$NoCGO) {
+            Write-Host "CGO build failed, trying without CGO..." -ForegroundColor Yellow
+            $env:CGO_ENABLED = "0"
+            Invoke-Expression $buildCmd
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to build backend even without CGO"
+            }
+            Write-Host "Built without CGO (some features may be limited)" -ForegroundColor Yellow
+        } else {
+            throw "Failed to build backend"
+        }
     } else {
-        Write-Host "Built successfully with CGO" -ForegroundColor Green
+        if ($env:CGO_ENABLED -eq "1") {
+            Write-Host "Built successfully with CGO" -ForegroundColor Green
+        } else {
+            Write-Host "Built successfully without CGO" -ForegroundColor Green
+        }
     }
 } catch {
     Write-Host "Error: $_" -ForegroundColor Red

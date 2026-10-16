@@ -41,7 +41,7 @@ func TestHotInboundAddRemove(t *testing.T) {
 	}
 
 	port := freePort(t)
-	inbound := []byte(fmt.Sprintf(`{"type":"vless","tag":"in","listen":"127.0.0.1","listen_port":%d}`, port))
+	inbound := []byte(fmt.Sprintf(`{"type":"mixed","tag":"in","listen":"127.0.0.1","listen_port":%d}`, port))
 	for i := 0; i < 3; i++ {
 		if err := c.AddInbound(inbound); err != nil {
 			t.Fatalf("add %d: %v", i, err)
@@ -73,7 +73,7 @@ func TestBootInboundRemoveThenStop(t *testing.T) {
 	c := NewCore()
 	t.Cleanup(func() { _ = c.Stop() })
 	port := freePort(t)
-	config := fmt.Sprintf(`{"log":{"level":"error"},"inbounds":[{"type":"vless","tag":"in","listen":"127.0.0.1","listen_port":%d}]}`, port)
+	config := fmt.Sprintf(`{"log":{"level":"error"},"inbounds":[{"type":"mixed","tag":"in","listen":"127.0.0.1","listen_port":%d}]}`, port)
 	if err := c.Start([]byte(config)); err != nil {
 		t.Fatalf("start: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestHotOutboundDependency(t *testing.T) {
 	if err := c.AddOutbound([]byte(`{"type":"selector","tag":"sel","outbounds":["base"]}`)); err != nil {
 		t.Fatalf("add selector: %v", err)
 	}
-	if err := c.AddOutbound([]byte(`{"type":"vless","tag":"via","server":"127.0.0.1","server_port":1,"uuid":"11111111-1111-1111-1111-111111111111","detour":"base"}`)); err != nil {
+	if err := c.AddOutbound([]byte(`{"type":"socks","tag":"via","server":"127.0.0.1","server_port":1,"detour":"base"}`)); err != nil {
 		t.Fatalf("add detour: %v", err)
 	}
 	if err := c.RemoveOutbound("base"); err == nil || !strings.Contains(err.Error(), "depended by") {

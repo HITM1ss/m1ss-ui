@@ -248,14 +248,11 @@ To run backend (from root folder of repository):
 
 ## Features
 
-- Minimal server build for 128 MB Alpine VPS: VLESS over native TCP, Reality,
-  XTLS-Vision and uTLS. Optional proxy engines and Cronet are excluded.
-- Web UI, user/subscription management, traffic accounting and CGO SQLite.
-- Direct egress, blocking, outbound groups and standard DNS transports.
-- Linux releases are statically linked with musl. Runtime defaults are
-  `GOMEMLIMIT=64MiB` and `GOGC=50`; actual usage depends on traffic and rules.
-- See [build and release notes](docs/BUILD-AND-RELEASE.md) for compatibility and
-  the mandatory 128 MB Alpine runtime check.
+- Supported protocols:
+  - General:  Mixed, SOCKS, HTTP, HTTPS, Direct, Redirect, TProxy
+  - V2Ray based: VLESS, VMess, Trojan, Shadowsocks
+  - Other protocols: ShadowTLS, Hysteria, Hysteria2, Naive, TUIC
+- Supports XTLS protocols
 - An advanced interface for routing traffic, incorporating PROXY Protocol, External, and Transparent Proxy, SSL Certificate, and Port
 - An advanced interface for inbound and outbound configuration
 - Clients’ traffic cap and expiration date

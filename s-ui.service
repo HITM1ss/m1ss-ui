@@ -7,8 +7,6 @@ Wants=network.target
 Type=simple
 WorkingDirectory=/usr/local/s-ui/
 ExecStart=/usr/local/s-ui/sui
-Environment=GOMEMLIMIT=64MiB
-Environment=GOGC=50
 Restart=on-failure
 RestartSec=10s
 
