@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { HumanReadable } from '@/plugins/utils'
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
 // One resource reading. Memory, disk and swap report a pair; cpu is a percent.
 interface Usage {
@@ -15,17 +15,10 @@ interface TilesData {
   swp?: Usage
 }
 
-// A gauge shows either a single label (cpu, or the empty dash) or a
-// current-over-total pair, each number carrying its own unit suffix.
 interface GaugeReading {
-  percent: number
-  text?: string
-  pair?: {
-    current: string
-    currentUnit: string
-    total: string
-    totalUnit: string
-  }
+  percent: number | null
+  current?: string
+  total?: string
 }
 
 const props = defineProps<{
@@ -33,28 +26,33 @@ const props = defineProps<{
   type: string
 }>()
 
-const gaugeData = (d?: Usage): GaugeReading => {
-  if (!d) return { percent: 0, text: '-' }
-  const curr = HumanReadable.sizeFormat(d.current, 0).split(' ')
-  const total = HumanReadable.sizeFormat(d.total, 0).split(' ')
-  if (curr[1] == total[1]) curr[1] = ''
+const gradientId = `resource-gauge-${useId()}`
+const resources: Record<string, { icon: string; label: string }> = {
+  'g-cpu': { icon: 'mdi-cpu-64-bit', label: 'main.gauge.cpu' },
+  'g-mem': { icon: 'mdi-memory', label: 'main.gauge.mem' },
+  'g-dsk': { icon: 'mdi-harddisk', label: 'main.gauge.dsk' },
+  'g-swp': { icon: 'mdi-swap-horizontal', label: 'main.gauge.swp' },
+}
+const resource = computed(() => resources[props.type] ?? resources['g-cpu'])
+const percentage = (value: number): number | null =>
+  Number.isFinite(value) ? Math.ceil(Math.min(100, Math.max(0, value))) : null
+const formatSize = (value: number) => value === 0 ? '0 B' : HumanReadable.sizeFormat(value, 1)
+
+const gaugeData = (usage?: Usage): GaugeReading => {
+  if (!usage || !Number.isFinite(usage.current) || !Number.isFinite(usage.total)
+    || usage.current < 0 || usage.total < 0) return { percent: null }
   return {
-    percent: Math.ceil(d.current * 100 / d.total),
-    pair: {
-      current: curr[0],
-      currentUnit: curr[1] ?? ' ',
-      total: total[0],
-      totalUnit: total[1] ?? '',
-    }
+    percent: usage.total > 0 ? percentage(usage.current * 100 / usage.total) : null,
+    current: formatSize(usage.current),
+    total: formatSize(usage.total),
   }
 }
 
 const data = computed((): GaugeReading => {
   const d = props.tilesData
-  if (!d.mem && !d.cpu) return { percent: 0, text: '-' }
   switch (props.type) {
     case 'g-cpu':
-      return { percent: d.cpu ?? 0, text: Math.ceil(d.cpu ?? 0) + "%" }
+      return { percent: d.cpu == null ? null : percentage(d.cpu) }
     case 'g-mem':
       return gaugeData(d.mem)
     case 'g-dsk':
@@ -62,106 +60,197 @@ const data = computed((): GaugeReading => {
     case 'g-swp':
       return gaugeData(d.swp)
   }
-  return { percent: 0, text: '-'}
+  return { percent: null }
 })
 
-const cssTransformRotateValue = computed(() => {
-  const percentageAsFraction = data.value.percent / 100
-  const halfPercentage = percentageAsFraction / 2
-
-  return `${halfPercentage}turn`
-})
-
-const gaugeColor = computed(() => {
-  if (data.value.percent > 90) return 'error'
-  if (data.value.percent > 70) return 'warning'
+const tone = computed(() => {
+  if ((data.value.percent ?? 0) > 90) return 'error'
+  if ((data.value.percent ?? 0) > 70) return 'warning'
   return 'primary'
+})
+
+const ticks = Array.from({ length: 21 }, (_, index) => {
+  const angle = (135 + index * 13.5) * Math.PI / 180
+  const inner = index % 5 === 0 ? 76 : 78
+  return {
+    x1: 100 + Math.cos(angle) * inner,
+    y1: 82 + Math.sin(angle) * inner,
+    x2: 100 + Math.cos(angle) * 81,
+    y2: 82 + Math.sin(angle) * 81,
+  }
 })
 </script>
 
 <template>
-  <div class="gauge__outer">
-    <div class="gauge__inner">
-      <div
-        class="gauge__fill"
-        :style="{
-          transform: `rotate(${cssTransformRotateValue})`,
-          background: gaugeColor === 'primary' ? 'var(--panel-gradient)' : `rgb(var(--v-theme-${gaugeColor}))`
-        }"
-      />
-      <div class="gauge__cover">
-        <span dir="ltr">
-          <template v-if="data.pair">
-            {{ data.pair.current }}<sup>{{ data.pair.currentUnit }}</sup>/{{ data.pair.total }}<sup>{{ data.pair.totalUnit }}</sup>
-          </template>
-          <template v-else>{{ data.text }}</template>
-        </span>
+  <div
+    class="resource-gauge"
+    :class="`resource-gauge--${tone}`"
+    role="progressbar"
+    :aria-label="$t(resource.label)"
+    :aria-valuenow="data.percent ?? undefined"
+    :aria-valuetext="data.percent == null ? '—' : `${data.percent}%`"
+    aria-valuemin="0"
+    aria-valuemax="100"
+  >
+    <div class="resource-gauge__dial">
+      <svg viewBox="0 0 200 160" aria-hidden="true">
+        <defs>
+          <linearGradient :id="gradientId" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgb(var(--v-theme-primary))" />
+            <stop offset="100%" stop-color="rgb(var(--v-theme-secondary))" />
+          </linearGradient>
+        </defs>
+        <g class="resource-gauge__ticks">
+          <line v-for="(tick, index) in ticks" :key="index" v-bind="tick" />
+        </g>
+        <path class="resource-gauge__track" d="M 53.331 128.669 A 66 66 0 1 1 146.669 128.669" />
+        <path
+          v-if="data.percent != null && data.percent > 0"
+          class="resource-gauge__progress"
+          d="M 53.331 128.669 A 66 66 0 1 1 146.669 128.669"
+          pathLength="100"
+          :stroke-dasharray="`${data.percent} 100`"
+          :stroke="tone === 'primary' ? `url(#${gradientId})` : 'var(--gauge-accent)'"
+        />
+      </svg>
+      <div class="resource-gauge__reading" dir="ltr">
+        <span class="resource-gauge__icon"><v-icon :icon="resource.icon" size="16" /></span>
+        <div class="resource-gauge__percent">
+          <strong>{{ data.percent ?? '—' }}</strong><span v-if="data.percent != null">%</span>
+        </div>
+        <span class="resource-gauge__label">{{ $t('stats.usage') }}</span>
       </div>
+    </div>
+    <div class="resource-gauge__summary" dir="ltr">
+      <template v-if="data.current != null">
+        <span class="resource-gauge__current">{{ data.current }}</span>
+        <span class="resource-gauge__separator">/</span>
+        <span>{{ data.total }}</span>
+      </template>
+      <template v-else-if="type === 'g-cpu'">
+        <span>0%</span><span class="resource-gauge__scale" /><span>100%</span>
+      </template>
+      <template v-else>—</template>
     </div>
   </div>
 </template>
 
 <style scoped>
-.gauge__outer {
+.resource-gauge {
+  --gauge-accent: rgb(var(--v-theme-primary));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   width: 100%;
-  max-width: 220px;
-  margin-inline: auto;
+  font-variant-numeric: tabular-nums;
 }
 
-.gauge__inner {
-  width: 100%;
-  height: 0;
-  padding-bottom: 50%;
-  background: rgba(var(--v-theme-on-surface), .07);
+.resource-gauge--warning {
+  --gauge-accent: rgb(var(--v-theme-warning));
+}
+
+.resource-gauge--error {
+  --gauge-accent: rgb(var(--v-theme-error));
+}
+
+.resource-gauge__dial {
   position: relative;
-  border-top-left-radius: 100% 200%;
-  border-top-right-radius: 100% 200%;
-  overflow: hidden;
+  width: min(100%, 172px);
+  aspect-ratio: 5 / 4;
 }
 
-.gauge__fill {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: inherit;
+.resource-gauge__dial svg {
+  display: block;
+  width: 100%;
   height: 100%;
-  background: rgb(var(--v-theme-primary));
-  transform-origin: center top;
-  transform: rotate(0turn);
-  transition: transform 0.2s ease-out;
 }
 
-.gauge__cover {
-  width: 75%;
-  height: 150%;
-  background: rgb(var(--v-theme-surface));
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 50%;
+.resource-gauge__ticks {
+  stroke: rgba(var(--v-theme-on-surface), .18);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
 
-  /* Text */
+.resource-gauge__track,
+.resource-gauge__progress {
+  fill: none;
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+
+.resource-gauge__track {
+  stroke: rgba(var(--v-theme-on-surface), .065);
+}
+
+.resource-gauge__reading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.resource-gauge__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 25%;
-  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  color: var(--gauge-accent);
+  background: color-mix(in srgb, var(--gauge-accent) 9%, transparent);
+}
+
+.resource-gauge__percent {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1;
+}
+
+.resource-gauge__percent strong {
+  font-size: 34px;
   font-weight: 700;
-  font-size: clamp(21px, 2.2vw, 28px);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.045em;
+  letter-spacing: -.055em;
 }
 
-sup {
+.resource-gauge__percent > span {
+  font-size: 13px;
+  color: rgba(var(--v-theme-on-surface), .5);
+}
+
+.resource-gauge__label {
+  font-size: 10px;
+  color: rgba(var(--v-theme-on-surface), .5);
+}
+
+.resource-gauge__summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 18px;
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
+  color: rgba(var(--v-theme-on-surface), .5);
+  white-space: nowrap;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .gauge__fill {
-    transition: none;
-  }
+.resource-gauge__current {
+  color: rgba(var(--v-theme-on-surface), .85);
+  font-weight: 600;
+}
+
+.resource-gauge__separator {
+  opacity: .6;
+}
+
+.resource-gauge__scale {
+  width: 28px;
+  height: 1px;
+  background: rgba(var(--v-theme-on-surface), .14);
 }
 </style>

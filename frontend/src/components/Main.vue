@@ -145,11 +145,42 @@
       </v-card>
       <v-row class="dashboard-grid">
         <v-col
-          v-for="i in reloadItems"
+          v-if="selectedGauges.length > 0"
+          cols="12"
+        >
+          <v-card
+            class="dashboard-gauges"
+            variant="flat"
+            tag="section"
+            :aria-label="$t('main.gauges')"
+          >
+            <v-card-text
+              class="dashboard-gauges-content"
+              :style="{
+                '--gauge-count': selectedGauges.length,
+                '--gauge-small-count': Math.min(2, selectedGauges.length),
+              }"
+            >
+              <div
+                v-for="item in selectedGauges"
+                :key="item.value"
+                class="dashboard-gauge"
+              >
+                <h2 class="dashboard-gauge-title">{{ item.title }}</h2>
+                <Gauge
+                  :tiles-data="tilesData"
+                  :type="item.value"
+                />
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col
+          v-for="i in otherTiles"
           :key="i"
           cols="12"
           sm="6"
-          :md="i.charAt(0) === 'g' ? 3 : 6"
+          md="4"
         >
           <v-card
             class="dashboard-tile"
@@ -183,11 +214,6 @@
             <v-card-text
               class="dashboard-tile-content"
             >
-              <Gauge
-                v-if="i.charAt(0) == 'g'"
-                :tiles-data="tilesData"
-                :type="i"
-              />
               <History
                 v-if="i.charAt(0) == 'h'"
                 :tiles-data="tilesData"
@@ -553,6 +579,9 @@ const reloadItems = computed({
   }
 })
 
+const selectedGauges = computed(() => menuItems[0].value.filter(item => reloadItems.value.includes(item.value)))
+const otherTiles = computed(() => reloadItems.value.filter(item => !item.startsWith('g-')))
+
 const reloadData = async () => {
   const request = [...new Set(reloadItems.value.map(r => r.split('-')[1]))]
   if (tilesData.value?.sys?.appVersion) request.filter(r => r != 'sys')
@@ -702,10 +731,38 @@ const restartSingbox = async () => {
   padding: 8px;
 }
 
-.dashboard-tile {
-  height: 246px;
+.dashboard-tile,
+.dashboard-gauges {
   border: 1px solid var(--panel-border);
   border-radius: var(--panel-radius);
+}
+
+.dashboard-gauges-content {
+  display: grid;
+  grid-template-columns: repeat(var(--gauge-count), minmax(0, 1fr));
+  row-gap: 24px;
+  padding: 24px 12px;
+}
+
+.dashboard-gauge {
+  min-width: 0;
+  padding-inline: 12px;
+}
+
+.dashboard-gauge + .dashboard-gauge {
+  border-inline-start: 1px solid var(--panel-border);
+}
+
+.dashboard-gauge-title {
+  margin-bottom: 12px;
+  text-align: center;
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dashboard-tile {
+  height: 246px;
 }
 
 .dashboard-tile-title {
@@ -737,12 +794,18 @@ const restartSingbox = async () => {
 }
 
 .dashboard-info {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 0;
   margin: 0 -4px;
   align-items: center;
   font-size: .8125rem;
 }
 
 .dashboard-info > [class*="v-col"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 5px 4px;
 }
 
@@ -759,6 +822,16 @@ const restartSingbox = async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 959px) {
+  .dashboard-gauges-content {
+    grid-template-columns: repeat(var(--gauge-small-count), minmax(0, 1fr));
+  }
+
+  .dashboard-gauge:nth-child(odd) {
+    border-inline-start: 0;
+  }
 }
 
 @media (max-width: 599px) {
