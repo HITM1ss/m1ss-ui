@@ -73,6 +73,14 @@ Full documentation lives in the [Wiki](https://github.com/alireza0/s-ui/wiki):
 bash <(curl -Ls https://raw.githubusercontent.com/HITM1ss/m1ss-ui/main/install.sh)
 ```
 
+#### Update from the panel
+
+After installing a version with panel updates, open **Settings → Software update** and select **Check for updates**. A newer stable release can be installed with **Update now**; no scheduled checks or upgrades run in the background.
+
+Panel updates support the standard `/usr/local/s-ui` Linux installation managed by systemd or Alpine/OpenRC. Downloads require HTTPS and `SHA256SUMS`. The updater downloads and verifies the archive before stopping the service, backs up the executable and SQLite database (including any WAL), migrates, and checks that the new panel, subscription listener, and core start. Failed migration or startup triggers restoration of the previous executable and database. Maintenance mode is preserved.
+
+Updates briefly interrupt proxy connections. One rollback snapshot and update logs are retained under `/usr/local/s-ui/.m1ss-update/job-*/`; a failed or interrupted update retains its recovery files. Docker installations should pull the new image and recreate the container instead. The first installation of a release containing this feature still uses the installer above.
+
 #### Installer language
 
 The installer is available in the same six languages as the panel: `en` (default), `fa`, `ru`, `vi`, `zhcn`, `zhtw`. Choose one with the `SUI_LANG` environment variable (when unset, your system `$LANG` is used as a hint):

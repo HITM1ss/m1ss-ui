@@ -1,4 +1,29 @@
 export default {
+  updater: {
+    title: '軟體更新', current: '目前版本', check: '檢查更新', install: '立即更新',
+    available: '發現新版本 {version}', latest: '目前已是最新正式版', notes: '查看更新說明',
+    confirm: '將下載並驗證最新正式版，備份程式及資料庫後重新啟動。代理連線會短暫中斷；若新版啟動失敗，將還原先前的程式及資料庫。',
+    saveFirst: '請先儲存尚未提交的設定，再進行更新。', reconnecting: '服務正在重新啟動，等待重新連線…',
+    reconnect: '重新連線', statusError: '暫時無法讀取更新狀態，請重新整理頁面重試。',
+    sessionExpired: '登入已過期，請重新整理頁面並重新登入後查看更新結果。',
+    recovery: '請先查看服務及更新日誌再重試，備份已保留在伺服器上。',
+    unsupported: {
+      container: 'Docker 安裝請透過拉取最新映像檔並重新建立容器更新。',
+      platform: '面板更新支援由 OpenRC 或 systemd 管理的 Linux 安裝。',
+      installation: '面板更新需要使用安裝腳本安裝至標準目錄 /usr/local/s-ui。',
+      permissions: '服務需要有替換程式及備份資料庫的權限。',
+      tools: '請安裝 bash、curl、tar、sha256sum 及 timeout 後使用面板更新。',
+      service: '請透過 s-ui 的 OpenRC 或 systemd 服務啟動面板後更新。',
+      architecture: '找不到適合目前 CPU 架構的發行安裝包。',
+    },
+    phase: {
+      queued: '正在準備更新…', downloading: '正在下載正式版…', verifying: '正在驗證安裝包…',
+      backingUp: '正在備份程式及資料庫…', installing: '正在安裝更新…', restarting: '正在重新啟動並檢查新版服務…',
+      rollingBack: '新版啟動失敗，正在還原先前版本…',
+      succeeded: '更新完成，新版服務已正常啟動。', rolledBack: '更新未成功，已還原先前的程式及資料庫。',
+      failed: '更新未完成。', interrupted: '更新已中斷。',
+    },
+  },
   ui: {
     controlPanel: "管理控制台",
     navigation: "主導覽",

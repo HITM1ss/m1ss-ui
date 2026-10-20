@@ -1,4 +1,29 @@
 export default {
+  updater: {
+    title: 'Software update', current: 'Current version', check: 'Check for updates', install: 'Update now',
+    available: 'Version {version} is available', latest: 'You are on the latest stable release', notes: 'Release notes',
+    confirm: 'Download and verify the latest stable release, back up the program and database, then restart. Proxy connections will briefly disconnect. If startup fails, the previous version and database will be restored.',
+    saveFirst: 'Save your pending settings before updating.', reconnecting: 'The service is restarting. Waiting to reconnect…',
+    reconnect: 'Reconnect', statusError: 'Unable to read update status. Reload this page to try again.',
+    sessionExpired: 'Your session expired. Reload the page to sign in and view the update result.',
+    recovery: 'Check the service and update logs before retrying. The backup is retained on the server.',
+    unsupported: {
+      container: 'Docker installations are updated by pulling and recreating the container with the latest image.',
+      platform: 'Panel updates support Linux installations managed by OpenRC or systemd.',
+      installation: 'Panel updates require the standard script installation at /usr/local/s-ui.',
+      permissions: 'The installed service needs permission to replace its program and back up its database.',
+      tools: 'Install bash, curl, tar, sha256sum and timeout to enable panel updates.',
+      service: 'Start the panel using its s-ui OpenRC or systemd service to enable updates.',
+      architecture: 'No compatible release archive was found for this CPU architecture.',
+    },
+    phase: {
+      queued: 'Preparing the update…', downloading: 'Downloading the release…', verifying: 'Verifying the download…',
+      backingUp: 'Backing up the program and database…', installing: 'Installing the update…', restarting: 'Restarting and checking the new version…',
+      rollingBack: 'The new version failed to start. Restoring the previous version…',
+      succeeded: 'Update complete. The new version started successfully.', rolledBack: 'The update failed. The previous version and database were restored.',
+      failed: 'The update did not complete.', interrupted: 'The update was interrupted.',
+    },
+  },
   ui: {
     controlPanel: "Control panel",
     navigation: "Navigation",

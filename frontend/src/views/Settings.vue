@@ -1,4 +1,5 @@
 <template>
+  <PanelUpdate :disabled="stateChange || loading" />
   <v-card :loading="loading">
     <v-tabs
       v-model="tab"
@@ -368,6 +369,7 @@ import HttpUtils from '@/plugins/httputil'
 import { FindDiff } from '@/plugins/utils'
 import SubJsonExtVue from '@/components/SubJsonExt.vue'
 import SubClashExtVue from '@/components/SubClashExt.vue'
+import PanelUpdate from '@/components/PanelUpdate.vue'
 import { push } from 'notivue'
 import Data from '@/store/modules/data'
 const tab = ref("t1")

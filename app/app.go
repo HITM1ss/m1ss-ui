@@ -10,6 +10,7 @@ import (
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/sub"
+	"github.com/alireza0/s-ui/updater"
 	"github.com/alireza0/s-ui/web"
 
 	"github.com/op/go-logging"
@@ -86,12 +87,18 @@ func (a *APP) Start() error {
 
 	// StartCore does nothing while maintenance is on, so say why rather than
 	// leave the operator looking at a panel that came up with no core.
-	if maintenance, mErr := a.SettingService.GetMaintenance(); mErr == nil && maintenance {
+	maintenance, mErr := a.SettingService.GetMaintenance()
+	if mErr == nil && maintenance {
 		logger.Warning("maintenance mode is on: core not started, clients cannot connect")
 	} else {
 		err = a.configService.StartCore()
 		if err != nil {
 			logger.Error(err)
+		}
+	}
+	if (mErr == nil && maintenance) || a.core.IsRunning() {
+		if err := updater.MarkReady(); err != nil {
+			logger.Warning("unable to acknowledge panel update readiness: ", err)
 		}
 	}
 
