@@ -1,5 +1,6 @@
 export default {
   ui: {
+    skipToContent: "Chuyển đến nội dung",
     controlPanel: "Bảng điều khiển",
     navigation: "Điều hướng",
     overview: "Tổng quan",
@@ -161,6 +162,8 @@ export default {
     moveDown: "Di chuyển xuống",
   },
   login: {
+    workspaceTitle: "Quản lý kết nối.\nTheo dõi vận hành.",
+    workspaceDescription: "Quản lý kết nối, người dùng và theo dõi tài nguyên máy chủ.",
     subtitle: "Đăng nhập để quản lý dịch vụ",
     title: "Đăng nhập",
     username: "Tên người dùng",

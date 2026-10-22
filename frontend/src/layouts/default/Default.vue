@@ -1,5 +1,9 @@
 <template>
   <v-app class="panel-app">
+    <a
+      class="panel-skip-link"
+      href="#panel-main"
+    >{{ $t('ui.skipToContent') }}</a>
     <drawer
       :is-mobile="isMobile"
       :display-drawer="displayDrawer"
@@ -9,6 +13,7 @@
     <default-bar
       :is-mobile="isMobile"
       :rail="rail"
+      :display-drawer="displayDrawer"
       @toggle-drawer="toggleDrawer"
     />
     <default-view />

@@ -1,5 +1,6 @@
 export default {
   ui: {
+    skipToContent: "رفتن به محتوای اصلی",
     controlPanel: "پنل مدیریت",
     navigation: "پیمایش",
     overview: "نمای کلی",
@@ -161,6 +162,8 @@ export default {
     moveDown: "انتقال به پایین",
   },
   login: {
+    workspaceTitle: "اتصال‌های منظم.\nوضعیت روشن.",
+    workspaceDescription: "اتصال‌ها و کاربران را مدیریت کنید و منابع سرور را زیر نظر بگیرید.",
     subtitle: "برای مدیریت سرویس‌ها وارد شوید",
     title: "ورود",
     username: "نام کاربری",

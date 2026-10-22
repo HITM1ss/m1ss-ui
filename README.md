@@ -1,7 +1,7 @@
 # M1ss-UI
 **An Advanced Web Panel • Built on SagerNet/Sing-Box**
 
-M1ss-UI is a customized fork of [S-UI](https://github.com/alireza0/s-ui), with a blue/purple interface and a bundled frontend. See [自动构建与部署](docs/BUILD-AND-RELEASE.md) for build artifacts, release triggers and installation steps.
+M1ss-UI is a customized fork of [S-UI](https://github.com/alireza0/s-ui), with a lightweight responsive interface and a bundled frontend. See [自动构建与部署](docs/BUILD-AND-RELEASE.md) for build artifacts, release triggers and installation steps.
 
 ![](https://img.shields.io/github/v/release/HITM1ss/m1ss-ui.svg)
 [![CI](https://github.com/HITM1ss/m1ss-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/HITM1ss/m1ss-ui/actions/workflows/ci.yml)

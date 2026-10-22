@@ -25,6 +25,7 @@ export default {
     },
   },
   ui: {
+    skipToContent: "Skip to content",
     controlPanel: "Control panel",
     navigation: "Navigation",
     overview: "Overview",
@@ -186,6 +187,8 @@ export default {
     moveDown: "Move down",
   },
   login: {
+    workspaceTitle: "Connections in order.\nOperations in view.",
+    workspaceDescription: "Manage connections and users. Keep server resources in view.",
     subtitle: "Sign in to manage your services",
     title: "Login",
     username: "Username",

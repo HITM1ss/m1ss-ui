@@ -21,36 +21,40 @@
     :tag="sessions.tag"
     @close="closeSessions"
   />
-  <v-row>
-    <v-col
-      cols="12"
-      justify="center"
-      align="center"
+  <div class="panel-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.inbounds') }}
+    </h1>
+    <v-btn
+      color="primary"
+      @click="showModal(0)"
     >
-      <v-btn
-        color="primary"
-        @click="showModal(0)"
-      >
-        {{ $t('actions.add') }}
-      </v-btn>
-    </v-col>
-  </v-row>
-  <v-row>
+      {{ $t('actions.add') }}
+    </v-btn>
+  </div>
+  <div
+    v-if="inbounds.length === 0"
+    class="panel-empty"
+  >
+    <v-icon
+      icon="mdi-cloud-download-outline"
+      size="32"
+    />
+    {{ $t('noData') }}
+  </div>
+  <v-row
+    v-else
+    class="resource-grid"
+  >
     <v-col
       v-for="(item, index) in <any[]>inbounds"
       :key="item.tag"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.tag"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           <v-row>
             <v-col>{{ item.type }}</v-col>
           </v-row>
@@ -123,9 +127,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showModal(item.id)"
           >
             <v-icon />
@@ -137,6 +142,7 @@
           </v-btn>
           <v-btn
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delOverlay[index] = true"
@@ -179,6 +185,7 @@
           </v-overlay>
           <v-btn
             icon="mdi-content-duplicate"
+            :aria-label="$t('actions.clone')"
             :loading="cloneLoading"
             @click="clone(item.id)"
           >
@@ -192,6 +199,7 @@
           <v-btn
             v-if="Data().enableTraffic"
             icon="mdi-chart-line"
+            :aria-label="$t('stats.graphTitle')"
             @click="showStats(item.tag)"
           >
             <v-icon />

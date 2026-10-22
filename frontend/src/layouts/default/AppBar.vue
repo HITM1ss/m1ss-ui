@@ -2,14 +2,16 @@
   <v-app-bar
     class="panel-appbar"
     :elevation="0"
-    height="72"
+    height="64"
   >
     <v-btn
       :icon="isMobile ? 'mdi-menu' : rail ? 'mdi-menu-open' : 'mdi-backburger'"
       variant="text"
-      size="small"
+      size="44"
       class="ms-3"
       :aria-label="$t('ui.toggleNavigation')"
+      :aria-expanded="isMobile ? displayDrawer : !rail"
+      aria-controls="panel-navigation"
       @click="$emit('toggleDrawer')"
     />
     <v-app-bar-title class="panel-appbar__title">
@@ -49,7 +51,7 @@
       <template #activator="{ props }">
         <v-btn
           icon
-          size="small"
+          size="44"
           v-bind="props"
           :aria-label="$t('ui.language')"
         >
@@ -71,7 +73,7 @@
       <template #activator="{ props }">
         <v-btn
           icon
-          size="small"
+          size="44"
           class="me-4 ms-1"
           v-bind="props"
           :aria-label="$t('ui.appearance')"
@@ -103,7 +105,7 @@ import { useThemeSwitcher } from '@/composables/useThemeSwitcher'
 import { computed } from 'vue'
 import Data from '@/store/modules/data'
 
-defineProps<{ isMobile: boolean, rail: boolean }>()
+defineProps<{ isMobile: boolean, rail: boolean, displayDrawer: boolean }>()
 defineEmits<{ toggleDrawer: [] }>()
 
 const route = useRoute()

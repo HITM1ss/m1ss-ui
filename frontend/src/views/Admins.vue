@@ -18,43 +18,33 @@
     :visible="tokenModal.visible"
     @close="closeTokenModal"
   />
-  <v-row>
-    <v-col
-      cols="12"
-      justify="center"
-      align="center"
+  <div class="panel-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.admins') }}
+    </h1>
+    <v-btn
+      color="primary"
+      @click="showChangesModal('')"
     >
-      <v-btn
-        color="primary"
-        style="margin: 0 5px;"
-        @click="showChangesModal('')"
-      >
-        {{ $t('admin.changes') }}
-      </v-btn>
-      <v-btn
-        color="primary"
-        @click="showTokenModal()"
-      >
-        {{ $t('admin.api.token') }}
-      </v-btn>
-    </v-col>
-  </v-row>
-  <v-row>
+      {{ $t('admin.changes') }}
+    </v-btn>
+    <v-btn
+      color="primary"
+      @click="showTokenModal()"
+    >
+      {{ $t('admin.api.token') }}
+    </v-btn>
+  </div>
+  <v-row class="resource-grid">
     <v-col
       v-for="item in <any[]>users"
       :key="item.id"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.username"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           {{ $t('admin.lastLogin') }}
         </v-card-subtitle>
         <v-card-text>
@@ -78,9 +68,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-account-edit"
+            :aria-label="$t('actions.edit')"
             @click="showEditModal(item)"
           >
             <v-icon />
@@ -92,6 +83,7 @@
           </v-btn>
           <v-btn
             icon="mdi-list-box-outline"
+            :aria-label="$t('admin.changes')"
             @click="showChangesModal(item.username)"
           >
             <v-icon />

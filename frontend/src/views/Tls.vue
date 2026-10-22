@@ -17,36 +17,27 @@
     @close="closeProviderModal"
     @save="saveProviderModal"
   />
-  <v-row>
-    <v-col
-      cols="12"
-      justify="center"
-      align="center"
+  <div class="panel-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.tls') }}
+    </h1>
+    <v-btn
+      color="primary"
+      @click="showModal(0)"
     >
-      <v-btn
-        color="primary"
-        @click="showModal(0)"
-      >
-        {{ $t('actions.add') }}
-      </v-btn>
-    </v-col>
-  </v-row>
-  <v-row>
+      {{ $t('actions.add') }}
+    </v-btn>
+  </div>
+  <v-row class="resource-grid">
     <v-col
       v-for="(item, index) in <any[]>tlsConfigs"
       :key="item.id"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.name"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           {{ item.server?.server_name?.length>0 ? item.server.server_name : "-" }}
         </v-card-subtitle>
         <v-card-text>
@@ -89,9 +80,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showModal(item.id)"
           >
             <v-icon />
@@ -104,6 +96,7 @@
           <v-btn
             v-if="tlsInbounds(item.id).length == 0"
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delOverlay[index] = true"
@@ -146,6 +139,7 @@
           </v-overlay>
           <v-btn
             icon="mdi-content-duplicate"
+            :aria-label="$t('actions.clone')"
             @click="clone(item)"
           >
             <v-icon />
@@ -164,43 +158,28 @@
        table, but they only exist to serve the configs above, so they are
        managed here. A TLS config points at one by tag. -->
   <v-divider class="mt-4" />
-  <v-row>
-    <v-col
-      class="v-card-subtitle"
-      cols="12"
-    >
+  <div class="panel-toolbar">
+    <h2 class="panel-toolbar__title">
       {{ $t('tls.provider.title') }}
-    </v-col>
-    <v-col
-      cols="12"
-      justify="center"
-      align="center"
+    </h2>
+    <v-btn
+      color="primary"
+      :loading="providerLoading"
+      @click="showProviderModal(-1)"
     >
-      <v-btn
-        color="primary"
-        :loading="providerLoading"
-        @click="showProviderModal(-1)"
-      >
-        {{ $t('actions.add') }}
-      </v-btn>
-    </v-col>
-  </v-row>
-  <v-row>
+      {{ $t('actions.add') }}
+    </v-btn>
+  </div>
+  <v-row class="resource-grid">
     <v-col
       v-for="(item, index) in <any[]>providers"
       :key="item.tag"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.tag"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           {{ providerTypeName(item.type) }}
         </v-card-subtitle>
         <v-card-text>
@@ -248,9 +227,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showProviderModal(index)"
           >
             <v-icon />
@@ -265,6 +245,7 @@
           <v-btn
             v-if="providerUsers(item.tag).length == 0"
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delProviderOverlay[index] = true"
@@ -307,6 +288,7 @@
           </v-overlay>
           <v-btn
             icon="mdi-content-duplicate"
+            :aria-label="$t('actions.clone')"
             @click="cloneProvider(index)"
           >
             <v-icon />

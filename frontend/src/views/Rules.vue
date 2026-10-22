@@ -45,88 +45,83 @@
     @save="savePresetRulesets"
     @close="presetRulesetsModal.visible = false"
   />
-  <v-row>
-    <v-col
-      cols="12"
-      justify="center"
-      align="center"
+  <div class="panel-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.rules') }}
+    </h1>
+    <v-btn
+      color="primary"
+      @click="showRuleModal(-1)"
     >
-      <v-btn
-        color="primary"
-        style="margin: 0 5px;"
-        @click="showRuleModal(-1)"
-      >
-        {{ $t('rule.add') }}
-      </v-btn>
-      <v-btn
-        color="primary"
-        style="margin: 0 5px;"
-        @click="showRulesetModal(-1)"
-      >
-        {{ $t('ruleset.add') }}
-      </v-btn>
-      <v-menu
-        v-model="actionMenu"
-        :close-on-content-click="false"
-        location="bottom center"
-      >
-        <template #activator="{ props }">
-          <v-btn
-            v-bind="props"
-            hide-details
-            variant="text"
-            icon
-          >
-            <v-icon
-              icon="mdi-tools"
-              color="primary"
-            />
-          </v-btn>
-        </template>
-        <v-list
-          density="compact"
-          nav
+      {{ $t('rule.add') }}
+    </v-btn>
+    <v-btn
+      color="primary"
+      @click="showRulesetModal(-1)"
+    >
+      {{ $t('ruleset.add') }}
+    </v-btn>
+    <v-menu
+      v-model="actionMenu"
+      :close-on-content-click="false"
+      location="bottom center"
+    >
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          hide-details
+          variant="text"
+          icon
         >
-          <v-list-item
-            link
-            @click="showImportRule"
-          >
-            <template #prepend>
-              <v-icon icon="mdi-routes" />
-            </template>
-            <v-list-item-title>{{ $t('rule.import.rulesTitle') }}</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            link
-            @click="showImportRulesets"
-          >
-            <template #prepend>
-              <v-icon icon="mdi-download-multiple" />
-            </template>
-            <v-list-item-title>{{ $t('rule.import.title') }}</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            link
-            @click="presetRulesetsModal.visible = true; actionMenu = false"
-          >
-            <template #prepend>
-              <v-icon icon="mdi-star-box-multiple" />
-            </template>
-            <v-list-item-title>{{ $t('ruleset.preset') }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-      <v-btn
-        variant="outlined"
-        color="warning"
-        :loading="loading"
-        :disabled="stateChange"
-        @click="saveConfig"
+          <v-icon
+            icon="mdi-tools"
+            color="primary"
+          />
+        </v-btn>
+      </template>
+      <v-list
+        density="compact"
+        nav
       >
-        {{ $t('actions.save') }}
-      </v-btn>
-    </v-col>
-  </v-row>
+        <v-list-item
+          link
+          @click="showImportRule"
+        >
+          <template #prepend>
+            <v-icon icon="mdi-routes" />
+          </template>
+          <v-list-item-title>{{ $t('rule.import.rulesTitle') }}</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          link
+          @click="showImportRulesets"
+        >
+          <template #prepend>
+            <v-icon icon="mdi-download-multiple" />
+          </template>
+          <v-list-item-title>{{ $t('rule.import.title') }}</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          link
+          @click="presetRulesetsModal.visible = true; actionMenu = false"
+        >
+          <template #prepend>
+            <v-icon icon="mdi-star-box-multiple" />
+          </template>
+          <v-list-item-title>{{ $t('ruleset.preset') }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+    <v-btn
+      variant="outlined"
+      color="warning"
+      :loading="loading"
+      :disabled="stateChange"
+      @click="saveConfig"
+    >
+      {{ $t('actions.save') }}
+    </v-btn>
+  </div>
   <v-row>
     <v-col
       class="v-card-subtitle"
@@ -229,28 +224,19 @@
       </v-row>
     </v-col>
   </v-row>
-  <v-row>
-    <v-col
-      class="v-card-subtitle"
-      cols="12"
-    >
-      {{ $t('rule.ruleset') }}
-    </v-col>
+  <h2 class="resource-section-title">
+    {{ $t('rule.ruleset') }}
+  </h2>
+  <v-row class="resource-grid">
     <v-col
       v-for="(item, index) in <any[]>rulesets"
       :key="item.tag"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.tag"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           <v-row><v-col>{{ $t('ruleset.' + item.type) }}</v-col></v-row>
         </v-card-subtitle>
         <v-card-text>
@@ -259,9 +245,10 @@
           <v-row><v-col>{{ $t('actions.update') }}</v-col><v-col>{{ item.update_interval ?? '-' }}</v-col></v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showRulesetModal(index)"
           >
             <v-icon /><v-tooltip
@@ -272,6 +259,7 @@
           </v-btn>
           <v-btn
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delRulesetOverlay[index] = true"
@@ -315,32 +303,23 @@
       </v-card>
     </v-col>
   </v-row>
-  <v-row>
-    <v-col
-      class="v-card-subtitle"
-      cols="12"
-    >
-      {{ $t('pages.rules') }}
-    </v-col>
+  <h2 class="resource-section-title">
+    {{ $t('pages.rules') }}
+  </h2>
+  <v-row class="resource-grid">
     <v-col
       v-for="(item, index) in <any[]>rules"
       :key="item.id"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
       :draggable="true"
       @dragstart="onDragStart(index)"
       @dragover.prevent
       @drop="onDrop(index)"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="index+1"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           <v-row><v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col></v-row>
         </v-card-subtitle>
         <v-card-text>
@@ -350,9 +329,10 @@
           <v-row><v-col>{{ $t('rule.invert') }}</v-col><v-col>{{ $t((item.invert ?? false) ? 'yes' : 'no') }}</v-col></v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showRuleModal(index)"
           >
             <v-icon /><v-tooltip
@@ -363,6 +343,7 @@
           </v-btn>
           <v-btn
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delRuleOverlay[index] = true"
@@ -376,6 +357,7 @@
           <v-spacer />
           <v-btn
             icon="mdi-arrow-up"
+            :aria-label="$t('actions.moveUp')"
             :disabled="index == 0"
             @click="moveRule(index, -1)"
           >
@@ -387,6 +369,7 @@
           </v-btn>
           <v-btn
             icon="mdi-arrow-down"
+            :aria-label="$t('actions.moveDown')"
             style="margin-inline-start:0;"
             :disabled="index == rules.length - 1"
             @click="moveRule(index, 1)"

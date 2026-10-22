@@ -21,37 +21,32 @@
     @close="closeDnsRuleModal"
     @save="saveDnsRuleModal"
   />
-  <v-row>
-    <v-col
-      cols="12"
-      justify="center"
-      align="center"
+  <div class="panel-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.dns') }}
+    </h1>
+    <v-btn
+      color="primary"
+      @click="showDnsModal(-1)"
     >
-      <v-btn
-        color="primary"
-        style="margin: 0 5px;"
-        @click="showDnsModal(-1)"
-      >
-        {{ $t('dns.add') }}
-      </v-btn>
-      <v-btn
-        color="primary"
-        style="margin: 0 5px;"
-        @click="showDnsRuleModal(-1)"
-      >
-        {{ $t('dns.rule.add') }}
-      </v-btn>
-      <v-btn
-        variant="outlined"
-        color="warning"
-        :loading="loading"
-        :disabled="stateChange"
-        @click="saveConfig"
-      >
-        {{ $t('actions.save') }}
-      </v-btn>
-    </v-col>
-  </v-row>
+      {{ $t('dns.add') }}
+    </v-btn>
+    <v-btn
+      color="primary"
+      @click="showDnsRuleModal(-1)"
+    >
+      {{ $t('dns.rule.add') }}
+    </v-btn>
+    <v-btn
+      variant="outlined"
+      color="warning"
+      :loading="loading"
+      :disabled="stateChange"
+      @click="saveConfig"
+    >
+      {{ $t('actions.save') }}
+    </v-btn>
+  </div>
   <v-row>
     <v-col
       class="v-card-subtitle"
@@ -138,28 +133,19 @@
       </v-row>
     </v-col>
   </v-row>
-  <v-row>
-    <v-col
-      class="v-card-subtitle"
-      cols="12"
-    >
-      {{ $t('dns.title') }}
-    </v-col>
+  <h2 class="resource-section-title">
+    {{ $t('dns.title') }}
+  </h2>
+  <v-row class="resource-grid">
     <v-col
       v-for="(item, index) in <any[]>dns.servers"
       :key="item.id"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.tag"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           <v-row>
             <v-col>{{ item.type }}</v-col>
           </v-row>
@@ -185,9 +171,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showDnsModal(index)"
           >
             <v-icon />
@@ -199,6 +186,7 @@
           </v-btn>
           <v-btn
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delDnsOverlay[index] = true"
@@ -243,32 +231,23 @@
       </v-card>
     </v-col>
   </v-row>
-  <v-row>
-    <v-col
-      class="v-card-subtitle"
-      cols="12"
-    >
-      {{ $t('dns.rule.title') }}
-    </v-col>
+  <h2 class="resource-section-title">
+    {{ $t('dns.rule.title') }}
+  </h2>
+  <v-row class="resource-grid">
     <v-col
       v-for="(item, index) in <any[]>dnsRules"
       :key="item.id"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
       :draggable="true"
       @dragstart="onDragStart(index)"
       @dragover.prevent
       @drop="onDrop(index)"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="index+1"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           <v-row>
             <v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col>
           </v-row>
@@ -300,9 +279,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showDnsRuleModal(index)"
           >
             <v-icon />
@@ -314,6 +294,7 @@
           </v-btn>
           <v-btn
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delDnsRuleOverlay[index] = true"
@@ -328,6 +309,7 @@
           <v-spacer />
           <v-btn
             icon="mdi-arrow-up"
+            :aria-label="$t('actions.moveUp')"
             :disabled="index == 0"
             @click="moveRule(index, -1)"
           >
@@ -339,6 +321,7 @@
           </v-btn>
           <v-btn
             icon="mdi-arrow-down"
+            :aria-label="$t('actions.moveDown')"
             style="margin-inline-start:0;"
             :disabled="index == dnsRules.length - 1"
             @click="moveRule(index, 1)"

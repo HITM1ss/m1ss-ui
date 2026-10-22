@@ -1,5 +1,6 @@
 export default {
   ui: {
+    skipToContent: "Перейти к содержимому",
     controlPanel: "Панель управления",
     navigation: "Навигация",
     overview: "Обзор",
@@ -161,6 +162,8 @@ export default {
     apply: "Применить",
   },
   login: {
+    workspaceTitle: "Связи под контролем.\nРесурсы на виду.",
+    workspaceDescription: "Управляйте подключениями и пользователями, следите за ресурсами сервера.",
     subtitle: "Войдите для управления сервисами",
     title: "Вход",
     username: "Имя пользователя",

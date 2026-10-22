@@ -8,7 +8,6 @@
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles/main.css'
 
-import colors from 'vuetify/util/colors'
 import { fa, en, vi, zhHans, zhHant, ru } from 'vuetify/locale'
 
 // Composables
@@ -19,8 +18,8 @@ export default createVuetify({
   defaults: {
     VRow: { density: 'compact' },
     VBtn: { rounded: 'lg', elevation: 0 },
-    VCard: { rounded: 'xl', elevation: 0 },
-    VChip: { rounded: 'pill' },
+    VCard: { rounded: 'lg', elevation: 0 },
+    VChip: { rounded: 'sm' },
     VTextField: {
       variant: 'solo-filled',
     },
@@ -39,32 +38,32 @@ export default createVuetify({
     themes: {
       light: {
         colors: {
-          error: colors.red.accent2,
-          primary: '#5965e8',
-          secondary: '#8b5cf6',
-          background: '#f5f6fc',
+          error: '#b64b48',
+          primary: '#29685e',
+          secondary: '#586b65',
+          background: '#f3f5f4',
           surface: '#ffffff',
-          'surface-variant': '#f7f8fd',
-          'on-surface-variant': '#4e5370',
-          'on-surface': '#24283e',
-          info: '#5965e8',
-          success: '#20856e',
-          warning: '#a56c13',
+          'surface-variant': '#edf1ef',
+          'on-surface-variant': '#52615b',
+          'on-surface': '#26332e',
+          info: '#426c8a',
+          success: '#33735a',
+          warning: '#996514',
         },
       },
       dark: {
         colors: {
-          primary: '#a1a9ff',
-          secondary: '#bc9bff',
-          background: '#111321',
-          surface: '#1b1e31',
-          'surface-variant': '#22263c',
-          'on-surface-variant': '#bdc2df',
-          'on-surface': '#e7e9f8',
-          info: '#a1a9ff',
-          success: '#67ccb0',
-          warning: '#e4b363',
-          error: colors.red.accent2,
+          primary: '#8fc6b8',
+          secondary: '#acbdb5',
+          background: '#151b18',
+          surface: '#1d2621',
+          'surface-variant': '#27312b',
+          'on-surface-variant': '#afbeb5',
+          'on-surface': '#e1e9e4',
+          info: '#91b4cf',
+          success: '#8cc5a5',
+          warning: '#d9b270',
+          error: '#ed9991',
         },
       },
     },

@@ -17,14 +17,9 @@
     <v-responsive>
       <div class="dashboard-header">
         <div class="dashboard-heading">
-          <div class="dashboard-mark">
-            <v-icon
-              icon="mdi-view-dashboard-outline"
-              size="24"
-            />
-          </div>
           <div>
-            <h1>{{ $t('pages.home') }}</h1>
+            <span class="dashboard-eyebrow">M1ss-UI / {{ $t('ui.controlPanel') }}</span>
+            <h1>{{ $t('ui.overview') }}</h1>
             <p>{{ tilesData.sys?.hostName || 'M1ss-UI' }}</p>
           </div>
         </div>
@@ -166,7 +161,9 @@
                 :key="item.value"
                 class="dashboard-gauge"
               >
-                <h2 class="dashboard-gauge-title">{{ item.title }}</h2>
+                <h2 class="dashboard-gauge-title">
+                  {{ item.title }}
+                </h2>
                 <Gauge
                   :tiles-data="tilesData"
                   :type="item.value"
@@ -180,7 +177,8 @@
           :key="i"
           cols="12"
           sm="6"
-          md="4"
+          md="6"
+          lg="4"
         >
           <v-card
             class="dashboard-tile"
@@ -190,12 +188,14 @@
             <v-card-title class="dashboard-tile-title">
               {{ menuItems.flatMap(cat => cat.value).find(m => m.value == i)?.title }}
               <template v-if="i == 'i-sys'">
-                <v-icon
+                <v-btn
                   v-tooltip:top="$t('actions.update')"
-                  icon="mdi-update"
+                  :aria-label="$t('actions.update')"
+                  icon="mdi-refresh"
+                  variant="text"
                   color="primary"
-                  size="small"
-                  style="margin-inline-start: 10px;"
+                  size="32"
+                  class="ms-auto"
                   @click="reloadSys()"
                 />
               </template>
@@ -641,7 +641,8 @@ const restartSingbox = async () => {
 
 <style scoped>
 .dashboard {
-  max-width: 1600px;
+  max-width: 100%;
+  padding: 0;
 }
 
 .dashboard-header,
@@ -663,20 +664,11 @@ const restartSingbox = async () => {
   min-width: 0;
 }
 
-.dashboard-mark {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-  border-radius: 16px;
-  background: var(--panel-gradient);
-  color: #fff;
-}
+.dashboard-eyebrow { display: block; margin-bottom: 8px; font-size: .6875rem; font-weight: 600; letter-spacing: .06em; color: var(--panel-muted); }
 
 .dashboard-heading h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 600;
   line-height: 1.3;
   letter-spacing: -.025em;
 }
@@ -684,7 +676,7 @@ const restartSingbox = async () => {
 .dashboard-heading p {
   color: var(--panel-muted);
   font-size: .8125rem;
-  margin-top: 3px;
+  margin-top: 8px;
   overflow-wrap: anywhere;
 }
 
@@ -694,14 +686,14 @@ const restartSingbox = async () => {
 }
 
 .dashboard-actions :deep(.v-btn) {
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: .8125rem;
   letter-spacing: 0;
 }
 
 .dashboard-actions .dashboard-customize {
-  background: var(--panel-gradient);
-  color: #fff;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
 }
 
 .dashboard-grid {
@@ -741,12 +733,12 @@ const restartSingbox = async () => {
   display: grid;
   grid-template-columns: repeat(var(--gauge-count), minmax(0, 1fr));
   row-gap: 24px;
-  padding: 24px 12px;
+  padding: 28px 8px;
 }
 
 .dashboard-gauge {
   min-width: 0;
-  padding-inline: 12px;
+  padding-inline: 24px;
 }
 
 .dashboard-gauge + .dashboard-gauge {
@@ -754,15 +746,16 @@ const restartSingbox = async () => {
 }
 
 .dashboard-gauge-title {
-  margin-bottom: 12px;
-  text-align: center;
-  font-size: .875rem;
-  font-weight: 600;
+  margin-bottom: 18px;
+  color: var(--panel-muted);
+  text-align: start;
+  font-size: .75rem;
+  font-weight: 500;
   line-height: 1.5;
 }
 
 .dashboard-tile {
-  height: 246px;
+  height: 268px;
 }
 
 .dashboard-tile-title {
@@ -775,7 +768,7 @@ const restartSingbox = async () => {
 }
 
 .dashboard-tile-content {
-  height: 183px;
+  height: 202px;
   padding: 0 20px 20px;
   display: flex;
   align-items: center;
@@ -785,12 +778,12 @@ const restartSingbox = async () => {
 .dashboard-tile--info .dashboard-tile-content {
   display: block;
   height: auto;
-  min-height: 183px;
+  min-height: 202px;
 }
 
 .dashboard-tile--info {
   height: auto;
-  min-height: 246px;
+  min-height: 268px;
 }
 
 .dashboard-info {
@@ -824,7 +817,7 @@ const restartSingbox = async () => {
   white-space: nowrap;
 }
 
-@media (max-width: 959px) {
+@media (max-width: 1199px) {
   .dashboard-gauges-content {
     grid-template-columns: repeat(var(--gauge-small-count), minmax(0, 1fr));
   }
@@ -835,6 +828,8 @@ const restartSingbox = async () => {
 }
 
 @media (max-width: 599px) {
+  .dashboard-gauge { padding-inline: 12px; }
+  .dashboard-heading h1 { font-size: 1.6rem; }
   .dashboard-header {
     gap: 18px;
     margin-bottom: 22px;

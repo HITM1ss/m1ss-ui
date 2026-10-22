@@ -27,55 +27,56 @@
     :tag="sessions.tag"
     @close="closeSessions"
   />
-  <v-row
-    justify="center"
-    align="center"
+  <div class="panel-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.outbounds') }}
+    </h1>
+    <v-btn
+      color="primary"
+      @click="showModal(0)"
+    >
+      {{ $t('actions.add') }}
+    </v-btn>
+    <v-btn
+      color="primary"
+      @click="showBulkModal"
+    >
+      {{ $t('actions.addbulk') }}
+    </v-btn>
+    <v-btn
+      color="secondary"
+      variant="outlined"
+      :loading="testingAll"
+      append-icon="mdi-speedometer"
+      :disabled="testingAll || outbounds.length === 0"
+      @click="checkAllOutbounds"
+    >
+      {{ $t('actions.testAll') || 'Test all' }}
+    </v-btn>
+  </div>
+  <div
+    v-if="outbounds.length === 0"
+    class="panel-empty"
   >
-    <v-col cols="auto">
-      <v-btn
-        color="primary"
-        @click="showModal(0)"
-      >
-        {{ $t('actions.add') }}
-      </v-btn>
-    </v-col>
-    <v-col cols="auto">
-      <v-btn
-        color="primary"
-        @click="showBulkModal"
-      >
-        {{ $t('actions.addbulk') }}
-      </v-btn>
-    </v-col>
-    <v-col cols="auto">
-      <v-btn
-        color="secondary"
-        variant="outlined"
-        :loading="testingAll"
-        append-icon="mdi-speedometer"
-        :disabled="testingAll || outbounds.length === 0"
-        @click="checkAllOutbounds"
-      >
-        {{ $t('actions.testAll') || 'Test all' }}
-      </v-btn>
-    </v-col>
-  </v-row>
-  <v-row>
+    <v-icon
+      icon="mdi-cloud-upload-outline"
+      size="32"
+    />
+    {{ $t('noData') }}
+  </div>
+  <v-row
+    v-else
+    class="resource-grid"
+  >
     <v-col
       v-for="(item, index) in <any[]>outbounds"
       :key="item.tag"
-      cols="12"
-      sm="4"
-      md="3"
-      lg="2"
     >
       <v-card
-        rounded="xl"
-        elevation="5"
-        min-width="200"
+        class="resource-card"
         :title="item.tag"
       >
-        <v-card-subtitle style="margin-top: -15px;">
+        <v-card-subtitle>
           <v-row>
             <v-col>{{ item.type }}</v-col>
           </v-row>
@@ -135,6 +136,7 @@
               <v-icon
                 v-else
                 icon="mdi-speedometer"
+                :aria-label="$t('actions.test')"
                 @click="checkOutbound(item.tag)"
               >
                 <v-tooltip
@@ -174,9 +176,10 @@
           </v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions style="padding: 0;">
+        <v-card-actions>
           <v-btn
             icon="mdi-file-edit"
+            :aria-label="$t('actions.edit')"
             @click="showModal(item.id)"
           >
             <v-icon />
@@ -188,6 +191,7 @@
           </v-btn>
           <v-btn
             icon="mdi-file-remove"
+            :aria-label="$t('actions.del')"
             style="margin-inline-start:0;"
             color="warning"
             @click="delOverlay[index] = true"
@@ -231,6 +235,7 @@
           <v-btn
             v-if="Data().enableTraffic"
             icon="mdi-chart-line"
+            :aria-label="$t('stats.graphTitle')"
             @click="showStats(item.tag)"
           >
             <v-icon />

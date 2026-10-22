@@ -5,6 +5,13 @@
     :data="data"
     :options="<any>options"
   />
+  <div
+    v-else
+    class="chart-pending"
+    role="status"
+  >
+    {{ $t('loading') }}
+  </div>
 </template>
 
 <script lang="ts">
@@ -29,7 +36,7 @@ ChartJS.register(
   Title,
   Filler
 )
-ChartJS.defaults.font.family = '-apple-system, BlinkMacSystemFont, Vazirmatn, sans-serif'
+ChartJS.defaults.font.family = 'Avenir Next, Segoe UI, PingFang SC, Vazirmatn, sans-serif'
 
 // One resource reading. Memory reports a pair, cpu is a percent, and the
 // network and disk counters are totals a delta is taken from.
@@ -206,9 +213,9 @@ export default {
       const dark = this.theme.current.dark
       return {
         text: onSurface,
-        blue: dark ? '#94a0ff' : '#5965e8',
-        purple: dark ? '#b49aff' : '#8b5cf6',
-        gridY: dark ? '#a0a8d51a' : '#5965e812',
+        primary: dark ? '#8fc6b8' : '#29685e',
+        secondary: dark ? '#c7b487' : '#9b7f48',
+        gridY: dark ? '#afbeb518' : '#26332e12',
         gridX: 'transparent',
       }
     },
@@ -286,8 +293,8 @@ export default {
         datasets: [
           {
             label: '',
-            backgroundColor: 'rgba(89, 101, 232, 0.10)',
-            borderColor: this.chartColors.blue,
+            backgroundColor: 'rgba(82, 141, 122, 0.07)',
+            borderColor: this.chartColors.primary,
             fill: true,
             data: newData
           }
@@ -309,15 +316,15 @@ export default {
         datasets: [
           {
             label: '',
-            backgroundColor: 'rgba(89, 101, 232, 0.10)',
-            borderColor: this.chartColors.blue,
+            backgroundColor: 'rgba(82, 141, 122, 0.07)',
+            borderColor: this.chartColors.primary,
             fill: true,
             data: newData1
           },
           {
             label: '',
-            backgroundColor: 'rgba(139, 92, 246, 0.08)',
-            borderColor: this.chartColors.purple,
+            backgroundColor: 'rgba(155, 127, 72, 0.05)',
+            borderColor: this.chartColors.secondary,
             fill: true,
             data: newData2
           }
@@ -328,3 +335,7 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.chart-pending { display: grid; place-items: center; width: 100%; height: 100%; color: var(--panel-muted); font-size: .75rem; border-bottom: 1px solid var(--panel-border); }
+</style>

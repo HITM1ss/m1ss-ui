@@ -71,8 +71,10 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <div class="panel-toolbar">
-    <span class="panel-toolbar__title">{{ $t('pages.clients') }}</span>
+  <div class="panel-toolbar client-toolbar">
+    <h1 class="panel-toolbar__title">
+      {{ $t('pages.clients') }}
+    </h1>
     <v-chip
       size="small"
       color="primary"
@@ -692,11 +694,25 @@ const percentColor = (c: Client) => { return (c.up+c.down) >= c.volume ? 'error'
 
 </script>
 <style>
-.v-data-table__tr--mobile td {
+.client-table .v-data-table__tr--mobile td {
   height: fit-content;
   min-height: 36px !important;
 }
-.v-data-table__tr--mobile td div {
-  width:max-content;
+.client-table .v-data-table__tr--mobile .v-data-table__td-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.client-table .v-data-table__tr--mobile .v-chip {
+  height: auto;
+  min-height: 24px;
+  max-width: 100%;
+}
+.client-table .v-data-table__tr--mobile .v-chip__content {
+  white-space: normal;
+  line-height: 1.5;
+}
+@media (max-width: 360px) {
+  .client-toolbar .panel-toolbar__title { flex-basis: calc(100% - 44px); }
+  .client-toolbar .panel-toolbar__spacer { display: none; }
 }
 </style>

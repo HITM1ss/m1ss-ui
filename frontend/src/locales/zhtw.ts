@@ -25,6 +25,7 @@ export default {
     },
   },
   ui: {
+    skipToContent: "跳至主要內容",
     controlPanel: "管理控制台",
     navigation: "主導覽",
     overview: "概覽",
@@ -186,6 +187,8 @@ export default {
     moveDown: "下移",
   },
   login: {
+    workspaceTitle: "連線有序，\n運行可見。",
+    workspaceDescription: "管理連線與使用者，隨時查看伺服器狀態。",
     subtitle: "登入以管理你的服務",
     title: "登入",
     username: "使用者名稱",
