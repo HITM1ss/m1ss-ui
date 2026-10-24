@@ -20,8 +20,8 @@
             variant="tonal"
             color="primary"
             prepend-icon="mdi-refresh"
-            :loading="checking"
-            :disabled="active || starting"
+            :loading="checking || refreshing"
+            :disabled="busy"
             @click="check"
           >
             {{ $t('updater.check') }}
@@ -31,7 +31,7 @@
             color="primary"
             variant="flat"
             prepend-icon="mdi-download-outline"
-            :disabled="disabled || active || starting"
+            :disabled="disabled || busy || checking || refreshing"
             @click="confirmUpdate = true"
           >
             {{ $t('updater.install') }} v{{ release.latestVersion }}
@@ -66,17 +66,17 @@
         :text="$t('updater.saveFirst')"
       />
       <v-alert
-        v-if="phase !== 'idle'"
+        v-if="phase !== 'idle' || confirming || monitorExpired"
         class="mt-4"
         :type="alertType"
         variant="tonal"
         density="compact"
       >
-        {{ disconnected ? $t('updater.reconnecting') : $t(`updater.phase.${phase}`) }}
-        <span v-if="phase === 'failed' || phase === 'interrupted'"> {{ $t('updater.recovery') }}</span>
+        {{ monitorExpired ? $t('updater.monitorExpired') : confirming ? $t('updater.confirming') : disconnected ? $t('updater.reconnecting') : $t(`updater.phase.${phase}`) }}
+        <span v-if="!confirming && (phase === 'failed' || phase === 'interrupted')"> {{ $t('updater.recovery') }}</span>
       </v-alert>
       <v-progress-linear
-        v-if="active"
+        v-if="(active || confirming) && !monitorExpired"
         indeterminate
         color="primary"
         rounded
@@ -114,7 +114,7 @@
           <v-btn
             color="primary"
             variant="flat"
-            :disabled="disabled || starting || active"
+            :disabled="disabled || busy || checking || refreshing"
             @click="install"
           >
             {{ $t('updater.install') }}
@@ -126,120 +126,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { i18n } from '@/locales'
-import api from '@/plugins/api'
-import HttpUtils, { type Msg } from '@/plugins/httputil'
+import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import Update from '@/store/modules/update'
 
 const props = defineProps<{ disabled?: boolean }>()
 
-interface UpdateState {
-  phase: string
-  targetVersion?: string
-  previousVersion?: string
-}
-interface UpdateStatus {
-  currentVersion: string
-  supported: boolean
-  reason?: string
-  state: UpdateState
-}
-interface Release extends UpdateStatus {
-  latestVersion: string
-  available: boolean
-  url: string
-}
-
-const status = ref<UpdateStatus>()
-const release = ref<Release>()
-const checking = ref(false)
-const starting = ref(false)
+const update = Update()
+const {
+  status, release, checking, refreshing, disconnected, monitorExpired, statusError,
+  phase, active, confirming, busy, alertType,
+} = storeToRefs(update)
+const { check, resumeMonitoring } = update
 const confirmUpdate = ref(false)
-const disconnected = ref(false)
-const monitorExpired = ref(false)
-const statusError = ref('')
-const phase = computed(() => status.value?.state.phase || 'idle')
-const active = computed(() => ['queued', 'downloading', 'verifying', 'backingUp', 'installing', 'restarting', 'rollingBack'].includes(phase.value))
-const alertType = computed(() => ['failed', 'interrupted', 'rolledBack'].includes(phase.value) ? 'warning' : phase.value === 'succeeded' ? 'success' : 'info')
-let timer: ReturnType<typeof setTimeout> | undefined
-let deadline = 0
-let disposed = false
-let acceptedUpdate = false
-
-const check = async () => {
-  checking.value = true
-  try {
-    const msg = await HttpUtils.get<Release>('api/checkUpdate', {}, { timeout: 20000 })
-    if (disposed) return
-    if (msg.success) {
-      release.value = msg.obj
-      status.value = msg.obj
-      statusError.value = ''
-      if (active.value) resumeMonitoring()
-    } else statusError.value = msg.msg
-  } finally { checking.value = false }
-}
-
-const refreshStatus = async () => {
-  try {
-    // Expected disconnections during service restart should not create a toast
-    // every three seconds or log the user out on a transient network error.
-    const response = await api.get<Msg<UpdateStatus>>('api/updateStatus', { timeout: 4000 })
-    if (disposed) return
-    if (!response.data.success || !response.data.obj) throw new Error(response.data.msg)
-    status.value = response.data.obj
-    disconnected.value = false
-    statusError.value = ''
-    if (!active.value) {
-      if (acceptedUpdate && phase.value === 'succeeded') {
-        window.location.reload()
-      }
-      return
-    }
-  } catch (error: unknown) {
-    if (disposed) return
-    if ((error as { response?: { status?: number } }).response?.status === 401) {
-      statusError.value = i18n.global.t('updater.sessionExpired')
-      monitorExpired.value = true
-      return
-    }
-    if (!deadline) {
-      statusError.value = i18n.global.t('updater.statusError')
-      return
-    }
-    disconnected.value = true
-  }
-  if (Date.now() < deadline) timer = setTimeout(refreshStatus, 3000)
-  else monitorExpired.value = true
-}
-
-const resumeMonitoring = () => {
-  clearTimeout(timer)
-  monitorExpired.value = false
-  deadline = Date.now() + 25 * 60 * 1000
-  void refreshStatus()
-}
 
 const install = async () => {
-  if (!release.value || props.disabled || active.value || starting.value) return
+  if (props.disabled || busy.value) return
   confirmUpdate.value = false
-  starting.value = true
-  try {
-    const msg = await HttpUtils.post<UpdateState>('api/update', { version: release.value.latestVersion }, { timeout: 20000 })
-    if (disposed) return
-    if (msg.success && status.value) {
-      status.value.state = msg.obj
-      acceptedUpdate = true
-      resumeMonitoring()
-    } else statusError.value = msg.msg
-  } finally { starting.value = false }
+  await update.install()
 }
-
-onMounted(async () => {
-  await refreshStatus()
-  if (!disposed && active.value) resumeMonitoring()
-})
-onBeforeUnmount(() => { disposed = true; clearTimeout(timer) })
 </script>
 
 <style scoped>

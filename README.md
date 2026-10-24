@@ -77,9 +77,80 @@ bash <(curl -Ls https://raw.githubusercontent.com/HITM1ss/m1ss-ui/main/install.s
 
 After installing a version with panel updates, open **Settings → Software update** and select **Check for updates**. A newer stable release can be installed with **Update now**; no scheduled checks or upgrades run in the background.
 
-Panel updates support the standard `/usr/local/s-ui` Linux installation managed by systemd or Alpine/OpenRC. Downloads require HTTPS and `SHA256SUMS`. The updater downloads and verifies the archive before stopping the service, backs up the executable and SQLite database (including any WAL), migrates, and checks that the new panel, subscription listener, and core start. Failed migration or startup triggers restoration of the previous executable and database. Maintenance mode is preserved.
+Panel updates support the standard `/usr/local/s-ui` Linux installation managed by systemd or Alpine/OpenRC. Downloads require HTTPS and `SHA256SUMS`. The updater downloads and verifies the archive before stopping the service, backs up the executable and SQLite database (including any WAL), migrates, and checks that the new panel, subscription listener, and core start. Failed migration or startup, and caught HUP/INT/TERM signals, trigger an attempt to restore the previous executable and database. The `rolledBack` result confirms that restoration and startup checks completed; `failed` requires inspection. Maintenance mode is preserved.
 
 Updates briefly interrupt proxy connections. One rollback snapshot and update logs are retained under `/usr/local/s-ui/.m1ss-update/job-*/`; a failed or interrupted update retains its recovery files. Docker installations should pull the new image and recreate the container instead. The first installation of a release containing this feature still uses the installer above.
+
+##### First upgrade from v1.6.8 or earlier
+
+The update worker is embedded in the currently running executable. The first web upgrade to v1.6.9 therefore still uses the old worker; its OpenRC rollback fix takes effect after v1.6.9 has started.
+
+For this first OpenRC upgrade, use SSH:
+
+1. Confirm that no update worker or migration is running, then stop the service as described in the recovery steps below.
+2. Back up the existing executable, the database at its original configured path, and any WAL after stopping the service. Keep them together in a manual snapshot folder, using the `backup/sui`, `backup/database` and optional `backup/database-wal` names shown below. Retain this snapshot throughout the upgrade.
+3. Run the installer pinned to this release from a root Bash shell. It downloads the versioned archive and checks the published checksum:
+
+   ```bash
+   bash <(curl -fsSL https://raw.githubusercontent.com/HITM1ss/m1ss-ui/v1.6.9/install.sh) v1.6.9
+   ```
+
+4. Verify the running version, panel, subscription endpoint and proxy behavior. If installation, migration or startup fails, stop the service and restore your manual snapshot using the recovery block below, setting `update_job` to that snapshot folder and `update_db` to the original database path.
+
+Once v1.6.9 is running, subsequent panel updates use the corrected worker.
+
+##### Recover after an interrupted update
+
+A power loss, or SIGKILL of the worker itself (including an OOM kill), bypasses its exit handler. Automatic rollback is not guaranteed in these cases. If the panel is reachable, a subsequent update-status request marks an active job as `interrupted` once its last state change is over 30 seconds old and its worker PID is no longer alive. The panel then asks you to inspect the service and recovery files. If the service is down, use SSH; the webpage cannot diagnose or restore a stopped panel.
+
+The files on a standard installation are:
+
+| File | Purpose |
+| --- | --- |
+| `/usr/local/s-ui/.m1ss-update/status.json` | Current job directory name, worker PID, phase, target version and previous version |
+| `/usr/local/s-ui/.m1ss-update/job-*/worker.log` | That job's download, migration, startup and rollback output |
+| `/usr/local/s-ui/.m1ss-update/job-*/backup/sui` | Previous executable |
+| `/usr/local/s-ui/.m1ss-update/job-*/backup/database` | Previous SQLite database file |
+| `/usr/local/s-ui/.m1ss-update/job-*/backup/database-wal` | Previous SQLite WAL, only if one existed when backed up |
+
+Use a root shell on the affected server and follow these steps:
+
+1. **Identify the job and confirm that it has exited.** Read `status.json` and the matching `worker.log`. Check the PID against the process command and ensure that neither that worker nor its migration child is still running; after a reboot the PID may have been reused. A systemd worker has a separate unit named `m1ss-ui-update-<job>.service`, for example `m1ss-ui-update-job-123.service`. If the worker is still running, allow its rollback to finish or stop that exact job and its children, then inspect the result again before restoring files.
+
+2. **Stop the panel service and confirm it stopped.** For systemd use `systemctl stop s-ui` and inspect `systemctl status s-ui`. For OpenRC use `rc-service --ifstarted s-ui stop` and inspect `rc-service s-ui status`. An already stopped service is expected to report inactive; a stop error with a still-running service must be resolved before continuing. Ensure that no `sui migrate` process remains, since it can write the database independently of the panel service.
+
+3. **Select a complete snapshot and the original database path.** Use the job named in `status.json` and restore the executable, database and optional WAL from that same job. Jobs that reached `installing` or `restarting` have completed the backup copies; an interruption during `backingUp` may leave partial backup files. The presence of a file alone does not prove that the snapshot is complete. During `downloading`, `verifying` or `backingUp`, installation and migration have not started: inspect the existing files and restart the unchanged installation rather than overwriting it with a partial snapshot. If snapshot completeness cannot be established, use an existing known-good backup.
+
+   The default database is `/usr/local/s-ui/db/s-ui.db`. If the service sets `SUI_DB_FOLDER`, the database is `<SUI_DB_FOLDER>/s-ui.db`; relative folders resolve from the service's working directory, normally `/usr/local/s-ui`. Check the original service configuration, including systemd overrides (`systemctl cat s-ui`) or OpenRC's `/etc/init.d/s-ui` and `/etc/conf.d/s-ui`. The backup is always named `database`, so its name does not identify the original path. Keep the service configured to use that original folder.
+
+4. **Restore the stopped installation.** Replace the job placeholder and, if necessary, `update_db` below before running this Bash block. This returns database contents to the snapshot time. The original backup files are kept. Do not run a new migration when restoring the previous executable together with its matching database.
+
+   ```bash
+   bash <<'RECOVER'
+   set -e
+   update_job='/usr/local/s-ui/.m1ss-update/job-REPLACE_WITH_JOB'
+   update_binary='/usr/local/s-ui/sui'
+   update_db='/usr/local/s-ui/db/s-ui.db'
+
+   test -f "$update_job/backup/sui"
+   test -f "$update_job/backup/database"
+   cp -p -- "$update_job/backup/sui" "$update_binary.rollback"
+   mv -f -- "$update_binary.rollback" "$update_binary"
+   cp -p -- "$update_job/backup/database" "$update_db.rollback"
+   mv -f -- "$update_db.rollback" "$update_db"
+   rm -f -- "$update_db-wal" "$update_db-shm"
+   if [[ -f "$update_job/backup/database-wal" ]]; then
+       cp -p -- "$update_job/backup/database-wal" "$update_db-wal"
+   fi
+   rm -f -- /usr/local/s-ui/.m1ss-update/ready
+   RECOVER
+   ```
+
+   Stop here if any command fails; keep the service stopped while resolving the error. Never combine a database from one snapshot with another snapshot's WAL, and remove a leftover WAL even when the selected backup has no WAL.
+
+5. **Start and verify the previous version.** Use `systemctl start s-ui` and `systemctl status s-ui`, or `rc-service s-ui start` and `rc-service s-ui status`. Check service output with `journalctl -u s-ui -n 100 --no-pager` on systemd, or `/var/log/s-ui.log` on the standard OpenRC installation. Sign in at the configured panel URL and confirm the previous version, subscription endpoint and proxy connections; if maintenance mode was enabled, the core should remain stopped. Keep the job's backups and logs until these checks pass.
+
+Manual restoration does not change the recorded result to `rolledBack`. An `interrupted` or `failed` result remains an incident record; confirm recovery from the running version and service behavior before checking for another update.
 
 #### Installer language
 

@@ -482,6 +482,7 @@
 import HttpUtils from '@/plugins/httputil'
 import { HumanReadable } from '@/plugins/utils'
 import Data from '@/store/modules/data'
+import Update from '@/store/modules/update'
 import Gauge from '@/components/tiles/Gauge.vue'
 import History from '@/components/tiles/History.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
@@ -567,6 +568,9 @@ interface TilesData {
 }
 
 const tilesData = ref(<TilesData>{})
+const update = Update()
+let mounted = false
+const canLoadData = () => mounted && !update.pauseDataPolling
 
 const reloadItems = computed({
   get() { return Data().reloadItems },
@@ -583,16 +587,18 @@ const selectedGauges = computed(() => menuItems[0].value.filter(item => reloadIt
 const otherTiles = computed(() => reloadItems.value.filter(item => !item.startsWith('g-')))
 
 const reloadData = async () => {
+  if (!canLoadData()) return
   const request = [...new Set(reloadItems.value.map(r => r.split('-')[1]))]
   if (tilesData.value?.sys?.appVersion) request.filter(r => r != 'sys')
-  const data = await HttpUtils.get<TilesData>('api/status',{ r: request.join(',')})
+  const data = await HttpUtils.get<TilesData>('api/status', { r: request.join(',') }, {}, canLoadData)
   if (data.success) {
     tilesData.value = data.obj
   }
 }
 
 const reloadSys = async () => {
-  const data = await HttpUtils.get<TilesData>('api/status',{ r: 'sys'})
+  if (!canLoadData()) return
+  const data = await HttpUtils.get<TilesData>('api/status', { r: 'sys' }, {}, canLoadData)
   if (data.success) {
     tilesData.value.sys = data.obj.sys
   }
@@ -601,6 +607,7 @@ const reloadSys = async () => {
 let intervalId: ReturnType<typeof setInterval> | null = null
 
 const startTimer = () => {
+  if (!mounted || intervalId) return
   intervalId = setInterval(() => {
     reloadData()
   }, 2000)
@@ -614,6 +621,7 @@ const stopTimer = () => {
 }
 
 onMounted(async () => {
+  mounted = true
   loading.value = true
   if (Data().reloadItems.length != 0) {
     await reloadData()
@@ -623,6 +631,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  mounted = false
   stopTimer()
 })
 

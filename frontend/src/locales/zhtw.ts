@@ -2,11 +2,14 @@ export default {
   updater: {
     title: '軟體更新', current: '目前版本', check: '檢查更新', install: '立即更新',
     available: '發現新版本 {version}', latest: '目前已是最新正式版', notes: '查看更新說明',
-    confirm: '將下載並驗證最新正式版，備份程式及資料庫後重新啟動。代理連線會短暫中斷；若新版啟動失敗，將還原先前的程式及資料庫。',
-    saveFirst: '請先儲存尚未提交的設定，再進行更新。', reconnecting: '服務正在重新啟動，等待重新連線…',
+    confirm: '將下載並驗證最新正式版，備份程式及資料庫後重新啟動。代理連線會短暫中斷；若新版啟動失敗，會嘗試還原先前的程式及資料庫。',
+    saveFirst: '請先儲存尚未提交的設定，再進行更新。', reconnecting: '暫時失去連線，正在查詢更新狀態…',
+    confirming: '正在確認更新狀態…',
+    notAccepted: '找不到本次更新請求的任務，請重新檢查後再試。',
+    monitorExpired: '暫時無法確認更新結果。請重新連線後查詢。',
     reconnect: '重新連線', statusError: '暫時無法讀取更新狀態，請重新整理頁面重試。',
-    sessionExpired: '登入已過期，請重新整理頁面並重新登入後查看更新結果。',
-    recovery: '請先查看服務及更新日誌再重試，備份已保留在伺服器上。',
+    sessionExpired: '登入已過期，正在前往登入頁面…',
+    recovery: '請先檢查服務、更新日誌和備份再重試。面板無法存取時，請透過 SSH 按 README 中的步驟還原。',
     unsupported: {
       container: 'Docker 安裝請透過拉取最新映像檔並重新建立容器更新。',
       platform: '面板更新支援由 OpenRC 或 systemd 管理的 Linux 安裝。',
@@ -21,7 +24,7 @@ export default {
       backingUp: '正在備份程式及資料庫…', installing: '正在安裝更新…', restarting: '正在重新啟動並檢查新版服務…',
       rollingBack: '新版啟動失敗，正在還原先前版本…',
       succeeded: '更新完成，新版服務已正常啟動。', rolledBack: '更新未成功，已還原先前的程式及資料庫。',
-      failed: '更新未完成。', interrupted: '更新已中斷。',
+      failed: '更新未完成。', interrupted: '更新中斷，需要檢查服務及還原檔案。',
     },
   },
   ui: {

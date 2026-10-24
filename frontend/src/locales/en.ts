@@ -2,11 +2,14 @@ export default {
   updater: {
     title: 'Software update', current: 'Current version', check: 'Check for updates', install: 'Update now',
     available: 'Version {version} is available', latest: 'You are on the latest stable release', notes: 'Release notes',
-    confirm: 'Download and verify the latest stable release, back up the program and database, then restart. Proxy connections will briefly disconnect. If startup fails, the previous version and database will be restored.',
-    saveFirst: 'Save your pending settings before updating.', reconnecting: 'The service is restarting. Waiting to reconnect…',
+    confirm: 'Download and verify the latest stable release, back up the program and database, then restart. Proxy connections will briefly disconnect. If startup fails, the updater will attempt to restore the previous version and database.',
+    saveFirst: 'Save your pending settings before updating.', reconnecting: 'Connection interrupted. Checking the update status…',
+    confirming: 'Confirming the update status…',
+    notAccepted: 'No task was found for this update request. Check for updates again before retrying.',
+    monitorExpired: 'The update result is still unknown. Reconnect to check its status.',
     reconnect: 'Reconnect', statusError: 'Unable to read update status. Reload this page to try again.',
-    sessionExpired: 'Your session expired. Reload the page to sign in and view the update result.',
-    recovery: 'Check the service and update logs before retrying. The backup is retained on the server.',
+    sessionExpired: 'Your session expired. Returning to sign in…',
+    recovery: 'Inspect the service, update logs and backup before retrying. If the panel is down, use the SSH recovery steps in the README.',
     unsupported: {
       container: 'Docker installations are updated by pulling and recreating the container with the latest image.',
       platform: 'Panel updates support Linux installations managed by OpenRC or systemd.',
@@ -21,7 +24,7 @@ export default {
       backingUp: 'Backing up the program and database…', installing: 'Installing the update…', restarting: 'Restarting and checking the new version…',
       rollingBack: 'The new version failed to start. Restoring the previous version…',
       succeeded: 'Update complete. The new version started successfully.', rolledBack: 'The update failed. The previous version and database were restored.',
-      failed: 'The update did not complete.', interrupted: 'The update was interrupted.',
+      failed: 'The update did not complete.', interrupted: 'The update was interrupted. Inspect the service and recovery files.',
     },
   },
   ui: {

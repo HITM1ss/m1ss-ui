@@ -22,6 +22,8 @@ state() {
 
 service() {
     if [[ "$manager" == systemd ]]; then systemctl "$1" s-ui
+    # OpenRC otherwise reports an already-stopped service as a failure.
+    elif [[ "$1" == stop ]]; then rc-service --ifstarted s-ui stop
     else rc-service s-ui "$1"; fi
 }
 

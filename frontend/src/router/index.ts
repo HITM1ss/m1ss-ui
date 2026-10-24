@@ -1,7 +1,6 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/Login.vue'
-import Data from '@/store/modules/data'
 import { isAuthenticated } from '@/plugins/auth'
 
 const routes = [
@@ -84,8 +83,6 @@ const router = createRouter({
   routes,
 })
 
-let intervalId: ReturnType<typeof setInterval> | undefined
-
 // Navigation guard to check authentication state
 router.beforeEach((to) => {
   // The session cookie is HttpOnly, so this is a flag the panel keeps itself.
@@ -99,24 +96,6 @@ router.beforeEach((to) => {
     // If already authenticated and visiting /login, redirect to '/'
     return '/'
   }
-
-  // Load default data
-  if (to.path !== '/login') {
-    loadDataInterval()
-  } else {
-    if (intervalId) {
-      clearInterval(intervalId)
-      intervalId = undefined
-    }
-  }
 })
-
-const loadDataInterval = () => {
-  if (intervalId) return
-  Data().loadData()
-  intervalId = setInterval(() => {
-    Data().loadData()
-  }, 10000)
-}
 
 export default router

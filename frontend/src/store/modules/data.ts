@@ -63,8 +63,8 @@ const Data = defineStore('Data', {
     tlsConfigs: <tls[]>[],
   }),
   actions: {
-    async loadData() {
-      const msg = await HttpUtils.get<LoadedData>('api/load', this.lastLoad >0 ? {lu: this.lastLoad} : {} )
+    async loadData(shouldHandle?: () => boolean) {
+      const msg = await HttpUtils.get<LoadedData>('api/load', this.lastLoad >0 ? {lu: this.lastLoad} : {}, {}, shouldHandle)
       if(msg.success) {
         if (msg.obj.onlines) this.onlines = msg.obj.onlines
         this.maintenance = msg.obj.maintenance ?? false

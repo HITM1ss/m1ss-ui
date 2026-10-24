@@ -98,12 +98,15 @@ function isMsg(obj: unknown): obj is Msg {
 }
 
 const HttpUtils = {
-  async get<T = unknown>(url: string, data: object = {}, options: object = {}): Promise<Msg<T>> {
+  async get<T = unknown>(url: string, data: object = {}, options: object = {}, shouldHandle?: () => boolean): Promise<Msg<T>> {
     let msg: Msg<T>
     try {
         const resp = await api.get(url, { params: data, ...options })
+        // A data poll may become stale while the service is being updated.
+        if (shouldHandle && !shouldHandle()) return _objectlessMsg<T>(false, "")
         msg = _respToMsg<T>(resp)
     } catch (e: unknown) {
+        if (shouldHandle && !shouldHandle()) return _objectlessMsg<T>(false, "")
         const err = e as RequestError
         if (_sessionExpired(err?.response?.status, err?.response?.data?.msg)) {
             push.error({ title: i18n.global.t('invalidLogin') })

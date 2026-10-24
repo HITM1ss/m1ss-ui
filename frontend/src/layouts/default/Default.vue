@@ -21,11 +21,39 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DefaultBar from './AppBar.vue'
 import Drawer from './Drawer.vue'
 import DefaultView from './View.vue'
 import { useDisplay } from 'vuetify'
+import Data from '@/store/modules/data'
+import Update from '@/store/modules/update'
+
+const update = Update()
+let mounted = false
+let dataTimer: ReturnType<typeof setInterval> | undefined
+
+const loadData = () => {
+  if (!update.pauseDataPolling) void Data().loadData(() => mounted && !update.pauseDataPolling)
+}
+
+onMounted(async () => {
+  mounted = true
+  await update.start()
+  if (!mounted) return
+  loadData()
+  dataTimer = setInterval(loadData, 10000)
+})
+
+watch(() => update.pauseDataPolling, (paused) => {
+  if (mounted && dataTimer !== undefined && !paused) loadData()
+})
+
+onBeforeUnmount(() => {
+  mounted = false
+  clearInterval(dataTimer)
+  update.stop()
+})
 
 const { smAndDown } = useDisplay()
 const displayDrawer = ref(false)
