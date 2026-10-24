@@ -148,12 +148,12 @@ const install = async () => {
 </script>
 
 <style scoped>
-.panel-update { border: 1px solid var(--panel-border); border-radius: var(--panel-radius); }
+.panel-update { border: 2px solid var(--panel-border); border-radius: 0; }
 .panel-update > :deep(.v-card-text) { padding: 24px; }
 .panel-update__header, .panel-update__heading, .panel-update__actions { display: flex; align-items: center; gap: 12px; }
 .panel-update__header { justify-content: space-between; flex-wrap: wrap; gap: 20px; }
 .panel-update__actions { flex-wrap: wrap; gap: 8px; }
-.panel-update__icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; background: var(--panel-gradient); color: #fff; }
+.panel-update__icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: var(--radius); background: var(--primary); color: var(--primary-foreground); }
 .panel-update h2 { font-size: 1rem; font-weight: 600; }
 .panel-update__heading p, .panel-update__release { font-size: .8125rem; color: var(--panel-muted); }
 .panel-update__release { margin-top: 16px; }

@@ -51,8 +51,6 @@
 </template>
 
 <script lang="ts">
-import { useTheme } from 'vuetify'
-
 export default {
   props: {
     visible: { type: Boolean, required: true },
@@ -63,7 +61,6 @@ export default {
   data() {
     return {
       content: this.$props.data,
-      theme: useTheme()
     }
   },
   computed: {
@@ -100,15 +97,15 @@ export default {
 .code-editor {
   direction: ltr !important;
   display: flex;
-  border: 1px solid v-bind('theme.current.colors["outline"]');
-  border-radius: 4px;
+  border: 2px solid var(--foreground);
   overflow: hidden;
   font-size: 14px; /* Consistent font size */
 }
 
 .line-numbers {
   width: 40px;
-  background: v-bind('theme.current.colors["surface"]');
+  background: var(--accent);
+  border-inline-end: 1px solid var(--foreground);
   text-align: right;
   padding: 12px 8px 12px 4px; /* Match textarea padding */
   line-height: 1.5; /* Match textarea line height */
@@ -126,6 +123,7 @@ export default {
 }
 
 /* Override Vuetify textarea styles for alignment */
+:deep(.v-field__outline) { display: none; }
 :deep(.v-textarea .v-field__input) {
   padding: 12px 8px !important; /* Match line-numbers padding */
   line-height: 1.5 !important; /* Match line-numbers line height */

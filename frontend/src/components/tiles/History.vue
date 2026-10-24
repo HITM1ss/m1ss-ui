@@ -210,12 +210,11 @@ export default {
       // Vuetify types a theme colour as a string or one of its object forms;
       // the palette this app defines holds CSS colour strings throughout.
       const onSurface = <string>this.theme.current.colors['on-surface']
-      const dark = this.theme.current.dark
       return {
         text: onSurface,
-        primary: dark ? '#8fc6b8' : '#29685e',
-        secondary: dark ? '#c7b487' : '#9b7f48',
-        gridY: dark ? '#afbeb518' : '#26332e12',
+        primary: <string>this.theme.current.colors['chart-1'],
+        secondary: <string>this.theme.current.colors['chart-2'],
+        gridY: <string>this.theme.current.colors.outline,
         gridX: 'transparent',
       }
     },
@@ -293,7 +292,7 @@ export default {
         datasets: [
           {
             label: '',
-            backgroundColor: 'rgba(82, 141, 122, 0.07)',
+            backgroundColor: this.chartColors.primary + '12',
             borderColor: this.chartColors.primary,
             fill: true,
             data: newData
@@ -316,14 +315,14 @@ export default {
         datasets: [
           {
             label: '',
-            backgroundColor: 'rgba(82, 141, 122, 0.07)',
+            backgroundColor: this.chartColors.primary + '12',
             borderColor: this.chartColors.primary,
             fill: true,
             data: newData1
           },
           {
             label: '',
-            backgroundColor: 'rgba(155, 127, 72, 0.05)',
+            backgroundColor: this.chartColors.secondary + '12',
             borderColor: this.chartColors.secondary,
             fill: true,
             data: newData2

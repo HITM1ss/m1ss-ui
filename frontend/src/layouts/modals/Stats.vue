@@ -254,6 +254,7 @@ export default {
         { value: 720, title: i18n.global.n(30) + i18n.global.t('date.d')},
       ],
       baseOptions: {
+        animation: false as const,
         responsive: true,
         maintainAspectRatio: false,
         interaction: {
@@ -294,10 +295,9 @@ export default {
   computed: {
     options() {
       const onSurface = this.theme.current.colors['on-surface']
-      const dark = this.theme.current.dark
       const text = onSurface
-      const gridY = dark ? '#333333' : '#88888850'
-      const gridX = dark ? '#333333' : '#88888850'
+      const gridY = this.theme.current.colors.outline
+      const gridX = this.theme.current.colors.outline
       return {
         ...this.baseOptions,
         plugins: {
@@ -390,15 +390,15 @@ export default {
           datasets: [
             {
               label: i18n.global.t('stats.upload'),
-              backgroundColor: 'rgba(255, 165, 0, 0.4)',
-              borderColor: 'rgba(255, 165, 0)',
+              backgroundColor: String(this.theme.current.colors['chart-1']) + '20',
+              borderColor: String(this.theme.current.colors['chart-1']),
               fill: true,
               data: uplinkData
             },
             {
               label: i18n.global.t('stats.download'),
-              backgroundColor: 'rgba(0, 128, 0, 0.2)',
-              borderColor: 'rgba(0, 128, 0)',
+              backgroundColor: String(this.theme.current.colors['chart-2']) + '20',
+              borderColor: String(this.theme.current.colors['chart-2']),
               fill: true,
               data: downlinkData
             }

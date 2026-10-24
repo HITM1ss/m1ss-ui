@@ -43,7 +43,7 @@
     >
       <v-icon
         icon="mdi-heart"
-        color="red"
+        color="primary"
         size="1.5em"
       />
     </v-btn>
@@ -124,8 +124,8 @@ const maintenance = computed((): boolean => Data().maintenance)
 </script>
 
 <style scoped>
-.panel-appbar { border-bottom: 1px solid var(--panel-border); }
-.panel-appbar__title { font-size: .95rem; font-weight: 600; }
+.panel-appbar { border-bottom: 2px solid var(--panel-border); }
+.panel-appbar__title { font-size: .95rem; font-weight: 800; }
 .panel-appbar__brand { color: var(--panel-muted); font-size: .8rem; font-weight: 500; }
 .panel-appbar__brand > span { opacity: .4; }
 .donate-btn { width: 36px; height: 36px; margin-inline-end: 4px; }

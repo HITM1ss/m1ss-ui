@@ -10,7 +10,7 @@
 </template>
 
 <style>
-.panel-content { max-width: 1480px; margin-inline: auto; padding: 32px 36px 48px; }
+.panel-content { max-width: 1480px; margin-inline: auto; padding: 32px 40px 52px 36px; }
 @media (max-width: 960px) { .panel-content { padding: 20px; } }
-@media (max-width: 600px) { .panel-content { padding: 16px 12px 24px; } }
+@media (max-width: 600px) { .panel-content { padding: 20px 18px 30px 12px; } }
 </style>

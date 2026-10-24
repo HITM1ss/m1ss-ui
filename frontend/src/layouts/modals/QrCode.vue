@@ -56,7 +56,8 @@
                   :value="clientSub"
                   :size="size"
                   :margin="1"
-                  style="border-radius: 1rem; cursor: copy;"
+                  class="panel-qr"
+                  style="cursor: copy;"
                   @click="copyToClipboard(clientSub)"
                 />
               </v-col>
@@ -68,7 +69,8 @@
                   :value="clientSub + '?format=json'"
                   :size="size"
                   :margin="1"
-                  style="border-radius: 1rem; cursor: copy;"
+                  class="panel-qr"
+                  style="cursor: copy;"
                   @click="copyToClipboard(clientSub + '?format=json')"
                 />
               </v-col>
@@ -80,7 +82,8 @@
                   :value="clientSub + '?format=clash'"
                   :size="size"
                   :margin="1"
-                  style="border-radius: 1rem; cursor: copy;"
+                  class="panel-qr"
+                  style="cursor: copy;"
                   @click="copyToClipboard(clientSub + '?format=clash')"
                 />
               </v-col>
@@ -92,7 +95,8 @@
                   :value="singbox"
                   :size="size"
                   :margin="1"
-                  style="border-radius: .8rem; cursor: not-allowed;"
+                  class="panel-qr"
+                  style="cursor: not-allowed;"
                 />
               </v-col>
             </v-row>
@@ -108,7 +112,8 @@
                   :value="l.uri"
                   :size="size"
                   :margin="1"
-                  style="border-radius: .5rem; cursor: copy;"
+                  class="panel-qr"
+                  style="cursor: copy;"
                   @click="copyToClipboard(l.uri)"
                 />
               </v-col>

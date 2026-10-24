@@ -129,10 +129,10 @@ const tone = computed(() => {
 .resource-gauge--error { --gauge-accent: rgb(var(--v-theme-error)); }
 .resource-gauge__reading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .resource-gauge__percent { display: flex; align-items: baseline; gap: 4px; line-height: 1; }
-.resource-gauge__percent strong { font-size: 2.75rem; font-weight: 600; letter-spacing: -.06em; }
+.resource-gauge__percent strong { font-size: 2.75rem; font-weight: 800; letter-spacing: -.06em; }
 .resource-gauge__percent > span { font-size: 1rem; color: var(--panel-muted); }
-.resource-gauge__icon { color: var(--gauge-accent); opacity: .7; }
-.resource-gauge__track { height: 4px; border-radius: 2px; overflow: hidden; background: rgba(var(--v-theme-on-surface), .08); }
+.resource-gauge__icon { color: var(--gauge-accent); }
+.resource-gauge__track { height: 8px; border: 1px solid var(--panel-border); overflow: hidden; background: var(--accent); }
 .resource-gauge__progress { display: block; width: 100%; height: 100%; background: var(--gauge-accent); transform-origin: left; }
 .v-locale--is-rtl .resource-gauge__progress { transform-origin: right; }
 .resource-gauge__summary { display: flex; align-items: center; gap: 6px; min-height: 18px; margin-top: 12px; font-size: .75rem; color: var(--panel-muted); flex-wrap: wrap; }

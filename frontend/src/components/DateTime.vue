@@ -9,6 +9,7 @@
   />
   <DatePicker
     v-model="Input"
+    color="var(--primary)"
     :locale="locale"
     :element="elId"
     compact-time
@@ -127,18 +128,28 @@ export default {
 <style>
 .vpd-addon-list,
 .vpd-addon-list-item {
-  background-color: rgb(var(--v-theme-background)) !important;
-  border-color: rgb(var(--v-theme-background)) !important;
+  background-color: var(--popover) !important;
+  border-color: var(--border) !important;
+  color: var(--popover-foreground);
 }
 .vpd-content {
-  background-color: rgb(var(--v-theme-background)) !important;
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground);
+  border: 2px solid var(--foreground);
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 6px 6px 0 var(--foreground);
 }
+.vpd-header { color: var(--primary-foreground); border-bottom: 2px solid var(--foreground); }
+.vpd-day-effect { border-radius: 0; }
+.vpd-week { color: var(--muted-foreground); }
 .vpd-addon-list-item.vpd-selected,
 .vpd-addon-list-item:hover {
-  background-color: rgb(var(--v-theme-primary)) !important;
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
 }
 .vpd-close-addon {
-  color: rgb(var(--v-theme-on-surface)) !important;
+  color: var(--popover-foreground) !important;
   background-color: transparent;
 }
 .vpd-controls {

@@ -37,7 +37,8 @@
             :value="l"
             :size="size"
             :margin="1"
-            style="border-radius: .5rem; cursor: copy;"
+            class="panel-qr"
+            style="cursor: copy;"
             @click="copyToClipboard(l)"
           />
         </v-col>

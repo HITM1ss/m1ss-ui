@@ -664,6 +664,8 @@ const restartSingbox = async () => {
 .dashboard-header {
   justify-content: space-between;
   gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--panel-border);
   margin-bottom: 28px;
   flex-wrap: wrap;
 }
@@ -677,7 +679,7 @@ const restartSingbox = async () => {
 
 .dashboard-heading h1 {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.3;
   letter-spacing: -.025em;
 }
@@ -691,11 +693,11 @@ const restartSingbox = async () => {
 
 .dashboard-actions {
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 
 .dashboard-actions :deep(.v-btn) {
-  border-radius: 8px;
+  border-radius: 0;
   font-size: .8125rem;
   letter-spacing: 0;
 }
@@ -706,13 +708,14 @@ const restartSingbox = async () => {
 }
 
 .dashboard-grid {
-  margin: -8px;
+  margin: -10px;
+  padding: 0 4px 4px 0;
 }
 
 .dashboard-empty {
   padding: 64px 24px;
   text-align: center;
-  border: 1px dashed var(--panel-border);
+  border: 2px dashed var(--panel-border);
   border-radius: var(--panel-radius);
 }
 
@@ -729,12 +732,12 @@ const restartSingbox = async () => {
 }
 
 .dashboard-grid > [class*="v-col"] {
-  padding: 8px;
+  padding: 10px;
 }
 
 .dashboard-tile,
 .dashboard-gauges {
-  border: 1px solid var(--panel-border);
+  border: 2px solid var(--panel-border);
   border-radius: var(--panel-radius);
 }
 
@@ -759,7 +762,7 @@ const restartSingbox = async () => {
   color: var(--panel-muted);
   text-align: start;
   font-size: .75rem;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.5;
 }
 
@@ -772,7 +775,7 @@ const restartSingbox = async () => {
   align-items: center;
   padding: 20px 20px 12px;
   font-size: .875rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.5;
 }
 
